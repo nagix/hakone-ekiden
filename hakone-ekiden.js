@@ -4226,7 +4226,7 @@ map.on('load', function () {
 			.addTo(map);
 	});
 
-	for (let i = teams.length - 1; i >= 0; i--) {
+	for (let i = teams.length - 1; i > 0; i--) {
 		const team = teams[i];
 		const popup = new AnimatedPopup({ offset: 25, closeButton: false })
 			.setText(team.name);
@@ -4327,7 +4327,7 @@ map.on('load', function () {
 			lastDataLoad = now;
 		}
 
-		for (let i = 0; i < teams.length; i++) {
+		for (let i = 1; i < teams.length; i++) {
 			const team = teams[i];
 			if (team.distance && team.speed && team.ts) {
 //				const point = turf.along(routeFeature, now < lastDataLoadComplete + 1000 ?
