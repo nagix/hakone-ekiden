@@ -4311,7 +4311,7 @@ map.on('load', function () {
 						const lng = point[2];
 						const status = point[4];
 						const distance = point[5];
-						const speed = point[6];
+						let speed = point[6];
 						const section = point[8];
 						const ts = point[9];
 //						const prevDistance = teams[id].distance;
