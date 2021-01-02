@@ -4096,7 +4096,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoibmFnaXgiLCJhIjoiY2tqZXZ1MjQ0MGE3MDJ6bzc2cmNya
 var map = new mapboxgl.Map({
 	container: 'map',
 	style: 'mapbox://styles/mapbox-map-design/ckhqrf2tz0dt119ny6azh975y',
-	center: [139.76442, 35.6875],
+//	center: [139.76442, 35.6875],
+	center: [139.024883, 35.189139],
 	zoom: 15,
 	pitch: 60
 });
@@ -4259,7 +4260,7 @@ map.on('load', function () {
 			const now = Date.now();
 			const team = teams[i];
 
-			if (team.distance && team.speed && team.ts) {
+			if (!isNaN(team.distance) && !isNaN(team.speed) && !isNaN(team.ts)) {
 				const point = turf.along(routeFeature, team.distance + team.speed * (now - team.ts * 1000) / 3600000);
 
 				if (trackingMode === 'normal' || trackingMode === 'helicopter') {
