@@ -4086,7 +4086,8 @@ const teams = [{
 	name: '関東学生連合',
 }];
 
-const routeFeature = turf.lineString(routes[0]);
+//const routeFeature = turf.lineString(routes[0]);
+const routeFeature = turf.lineString(routes[1]);
 
 let trackingTeam, trackingBaseBearing;
 let trackingMode = 'normal';
@@ -4193,7 +4194,8 @@ map.on('load', function () {
 			properties: {},
 			geometry: {
 				type: 'LineString',
-				coordinates: routes[0]
+//				coordinates: routes[0]
+				coordinates: routes[1]
 			}
 		}
 	});
@@ -4211,7 +4213,7 @@ map.on('load', function () {
 			'line-width': 4
 		}
 	});
-
+/*
 	[
 		{name: 'スタート 読売新聞社前', index: 0},
 		{name: '鶴見中継所', index: 84},
@@ -4222,6 +4224,20 @@ map.on('load', function () {
 	].forEach(({name, index}) => {
 		new AnimatedPopup({ closeButton: false, closeOnClick: false })
 			.setLngLat(turf.getCoord(turf.along(routeFeature, distances[0][index])))
+			.setText(name)
+			.addTo(map);
+	});
+*/
+	[
+		{name: 'スタート 芦ノ湖', index: 0},
+		{name: '小田原中継所', index: 451},
+		{name: '平塚中継所', index: 604},
+		{name: '戸塚中継所', index: 761},
+		{name: '鶴見中継所', index: 916},
+		{name: 'ゴール 読売新聞社前', index: 1003}
+	].forEach(({name, index}) => {
+		new AnimatedPopup({ closeButton: false, closeOnClick: false })
+			.setLngLat(turf.getCoord(turf.along(routeFeature, distances[1][index])))
 			.setText(name)
 			.addTo(map);
 	});
@@ -4316,7 +4332,7 @@ map.on('load', function () {
 						});
 					}
 					if (!lastDataLoadComplete) {
-						const point = turf.along(routeFeature, teams[1].distance + teams[1].speed * (now - teams[1].ts * 1000) / 3600000);
+						const point = turf.along(routeFeature, teams[9].distance + teams[9].speed * (now - teams[9].ts * 1000) / 3600000);
 
 						map.flyTo({
 							center: turf.getCoord(point)
@@ -4356,9 +4372,9 @@ map.on('load', function () {
 						});
 					}
 				}
+				map.triggerRepaint();
 			}
 		}
-
 
 		requestAnimationFrame(frame);
 	}
