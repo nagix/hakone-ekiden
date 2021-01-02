@@ -4309,9 +4309,8 @@ map.on('load', function () {
 						const id = point[0];
 						const lat = point[1];
 						const lng = point[2];
-						const status = point[4];
 						const distance = point[5];
-						let speed = point[6];
+						const speed = point[6];
 						const section = point[8];
 						const ts = point[9];
 //						const prevDistance = teams[id].distance;
@@ -4321,10 +4320,6 @@ map.on('load', function () {
 //						const adjustedSpeed = prevDistance && prevSpeed && prevTs ?
 //							(distance + speed * (now - ts * 1000) / 3600000 - (prevDistance + prevSpeed * (now - prevTs * 1000) / 3600000)) * 3600 : 0;
 //						const adjustedDistance = distance + speed * (now + 1000 - ts * 1000) / 3600000 - adjustedSpeed * 1000 / 3600000;
-
-						if (status !== 1) {
-							speed = 0;
-						}
 
 						Object.assign(teams[id], {
 							lat,
