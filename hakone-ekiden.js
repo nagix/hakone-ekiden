@@ -4043,51 +4043,51 @@ const distances = [[
 const teams = [{
 	name: ''
 }, {
-	name: '青山学院大学',
-}, {
-	name: '東海大学',
-}, {
-	name: '國學院大學',
-}, {
-	name: '帝京大学',
-}, {
-	name: '東京国際大学',
-}, {
-	name: '明治大学',
-}, {
-	name: '早稲田大学',
-}, {
 	name: '駒澤大学',
 }, {
 	name: '創価大学',
 }, {
 	name: '東洋大学',
 }, {
+	name: '青山学院大学',
+}, {
+	name: '東海大学',
+}, {
+	name: '早稲田大学',
+}, {
 	name: '順天堂大学',
 }, {
+	name: '帝京大学',
+}, {
+	name: '國學院大學',
+}, {
+	name: '東京国際大学',
+}, {
+	name: '明治大学',
+}, {
 	name: '中央大学',
-}, {
-	name: '城西大学',
-}, {
-	name: '神奈川大学',
-}, {
-	name: '国士舘大学',
 }, {
 	name: '日本体育大学',
 }, {
 	name: '山梨学院大学',
 }, {
+	name: '神奈川大学',
+}, {
 	name: '法政大学',
 }, {
-	name: '拓殖大学',
+	name: '中央学院大学',
+}, {
+	name: '駿河台大学',
 }, {
 	name: '専修大学',
+}, {
+	name: '国士舘大学',
 }, {
 	name: '関東学生連合',
 }];
 
-//const routeFeature = turf.lineString(routes[0]);
-const routeFeature = turf.lineString(routes[1]);
+const routeFeature = turf.lineString(routes[0]);
+//const routeFeature = turf.lineString(routes[1]);
 
 let trackingTeam, trackingBaseBearing;
 let trackingMode = 'normal';
@@ -4095,16 +4095,16 @@ let trackingMode = 'normal';
 mapboxgl.accessToken = 'pk.eyJ1IjoibmFnaXgiLCJhIjoiY2tqZXZ1MjQ0MGE3MDJ6bzc2cmNyaWlrOSJ9.QjrikO3RTE20AMURILSTWg';
 var map = new mapboxgl.Map({
 	container: 'map',
-	style: 'mapbox://styles/mapbox-map-design/ckhqrf2tz0dt119ny6azh975y',
-//	center: [139.76442, 35.6875],
-	center: [139.024883, 35.189139],
-	zoom: 15,
+	style: 'style.json',
+	center: [139.76442, 35.6875],
+//	center: [139.024883, 35.189139],
+	zoom: 16.01,
 	pitch: 60
 });
 
 map.on('load', function () {
     map.addControl(new mapboxgl.NavigationControl());
-    map.addControl(new mapboxgl.FullscreenControl({container: 'map'}));
+    map.addControl(new mapboxgl.FullscreenControl({container: document.getElementById('map')}));
     map.addControl(new MapboxGLButtonControl([{
         className: 'mapboxgl-ctrl-normal active',
         title: 'ノーマル追跡モード',
@@ -4135,59 +4135,6 @@ map.on('load', function () {
         }
     }]));
 
-	map.addSource('mapbox-dem', {
-		type: 'raster-dem',
-		url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-		tileSize: 512,
-		maxzoom: 14
-	});
-	// add the DEM source as a terrain layer with exaggerated height
-	map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
-	 
-	// add a sky layer that will show when the map is highly pitched
-	map.addLayer({
-		'id': 'sky',
-		'type': 'sky',
-		'paint': {
-			'sky-type': 'atmosphere',
-			'sky-atmosphere-sun': [0.0, 0.0],
-			'sky-atmosphere-sun-intensity': 15
-		}
-	});
-
-	map.addSource('mapbox', {
-		type: 'vector',
-    	url: 'mapbox://mapbox.mapbox-streets-v8,mapbox.road-detail-v1'
-	});
-
-	map.addLayer({
-      "id": "building-3d",
-      "type": "fill-extrusion",
-      "source": "mapbox",
-      "source-layer": "building",
-      "filter": [
-        "==",
-        ["get", "underground"],
-        "false"
-      ],
-      "minzoom": 14,
-      "layout": {
-        "visibility": "visible"
-      },
-      "paint": {
-        "fill-extrusion-color": "rgba(220,217,214,1)",
-        "fill-extrusion-height": {
-          "property": "height",
-          "type": "identity"
-        },
-        "fill-extrusion-base": {
-          "property": "min_height",
-          "type": "identity"
-        },
-        "fill-extrusion-opacity": 0.8
-      }
-    });
-
 	map.addSource('route', {
 		type: 'geojson',
 		data: {
@@ -4195,8 +4142,8 @@ map.on('load', function () {
 			properties: {},
 			geometry: {
 				type: 'LineString',
-//				coordinates: routes[0]
-				coordinates: routes[1]
+				coordinates: routes[0]
+//				coordinates: routes[1]
 			}
 		}
 	});
@@ -4214,7 +4161,7 @@ map.on('load', function () {
 			'line-width': 4
 		}
 	});
-/*
+
 	[
 		{name: 'スタート 読売新聞社前', index: 0},
 		{name: '鶴見中継所', index: 84},
@@ -4228,7 +4175,7 @@ map.on('load', function () {
 			.setText(name)
 			.addTo(map);
 	});
-*/
+/*
 	[
 		{name: 'スタート 芦ノ湖', index: 0},
 		{name: '小田原中継所', index: 451},
@@ -4242,7 +4189,7 @@ map.on('load', function () {
 			.setText(name)
 			.addTo(map);
 	});
-
+*/
 	for (let i = teams.length - 1; i > 0; i--) {
 		const team = teams[i];
 		const popup = new AnimatedPopup({ offset: 25, closeButton: false })
@@ -4304,6 +4251,47 @@ map.on('load', function () {
 			fetch('https://mini-tokyo.appspot.com/hakone')
 				.then(response => response.json())
 				.then(result => {
+					// TEST
+					result = {
+						"status": {
+							"msg": "",
+							"marker": 1,
+							"sg": 1,
+							"course": 2,
+							"reload": "",
+							"reloadurl": "",
+							"leading": 0,
+							"interval": 10,
+							"camera": [0,1,2,3,4],
+							"now": "2021\/12\/16 19:18:52",
+							"runner": "20211204.1"
+						},
+						"points":[
+							[9, 35.68676, 139.76462, 1, 0, 299, 0, 1003, 5, 1639032236.17],
+							[0, 35.68676, 139.76462, 1, 0, 298, 0, 1003, 5, 1639030440.774],
+							[8, 35.68676, 139.76462, 1, 0, 297, 0, 1003, 5, 1639032204.888],
+							[10, 35.68676, 139.76462, 1, 0, 296, 0, 1003, 5, 1639031648.952],
+							[4, 35.68676, 139.76462, 1, 0, 295, 0, 1003, 5, 1639032029.69],
+							[2, 35.68676, 139.76462, 1, 0, 294, 0, 1003, 5, 1639032302.608],
+							[5, 35.68676, 139.76462, 1, 0, 293, 0, 1003, 5, 1639031554.147],
+							[11, 35.68676, 139.76462, 1, 0, 292, 0, 1003, 5, 1639031573.391],
+							[14, 35.68676, 139.76462, 1, 0, 291, 0, 1003, 5, 1639032272.438],
+							[3, 35.68676, 139.76462, 1, 0, 290, 0, 1003, 5, 1639031596.8],
+							[7, 35.68676, 139.76462, 1, 0, 289, 0, 1003, 5, 1639031509.367],
+							[1, 35.68676, 139.76462, 1, 0, 288, 0, 1003, 5, 1639032106.803],
+							[19, 35.68676, 139.76462, 1, 0, 287, 0, 1003, 5, 1639031487.288],
+							[6, 35.68676, 139.76462, 1, 0, 286, 0, 1003, 5, 1639031476.082],
+							[13, 35.68676, 139.76462, 1, 0, 285, 0, 1003, 5, 1639031537.962],
+							[16, 35.68676, 139.76462, 1, 0, 284, 0, 1003, 5, 1639031438.31],
+							[18, 35.68676, 139.76462, 1, 0, 283, 0, 1003, 5, 1639031414.513],
+							[15, 35.68676, 139.76462, 1, 0, 282, 0, 1003, 5, 1639031434.822],
+							[17, 35.68676, 139.76462, 1, 0, 281, 0, 1003, 5, 1639031646.906],
+							[12, 35.68676, 139.76462, 1, 0, 280, 0, 1003, 5, 1639031384.572],
+							[21, 35.68676, 139.76462, 1, 0, 279, 0, 1003, 5, 1639031612.565],
+							[20, 35.68676, 139.76462, 1, 0, 278, 0, 1003, 5, 1639032351.747]
+						]
+					};
+
 					for (const point of result.points) {
 						const now = Date.now();
 						const id = point[0];
