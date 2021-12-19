@@ -4086,11 +4086,20 @@ const teams = [{
 	name: '関東学生連合',
 }];
 
+const SQRT3 = Math.sqrt(3);
+
 const routeFeature = turf.lineString(routes[0]);
 //const routeFeature = turf.lineString(routes[1]);
 
+let modelOrigin = mapboxgl.MercatorCoordinate.fromLngLat([139.76442, 35.6875]);
+let modelScale = modelOrigin.meterInMercatorCoordinateUnits();
+
 let trackingTeam, trackingBaseBearing;
 let trackingMode = 'normal';
+
+function clamp(value, lower, upper) {
+	return Math.min(Math.max(value, lower), upper);
+}
 
 mapboxgl.accessToken = 'pk.eyJ1IjoibmFnaXgiLCJhIjoiY2tqZXZ1MjQ0MGE3MDJ6bzc2cmNyaWlrOSJ9.QjrikO3RTE20AMURILSTWg';
 var map = new mapboxgl.Map({
@@ -4103,37 +4112,37 @@ var map = new mapboxgl.Map({
 });
 
 map.on('load', function () {
-    map.addControl(new mapboxgl.NavigationControl());
-    map.addControl(new mapboxgl.FullscreenControl({container: document.getElementById('map')}));
-    map.addControl(new MapboxGLButtonControl([{
-        className: 'mapboxgl-ctrl-normal active',
-        title: 'ノーマル追跡モード',
-        eventHandler() {
-            trackingMode = 'normal';
-            document.getElementsByClassName('mapboxgl-ctrl-normal')[0].classList.add('active');
-            document.getElementsByClassName('mapboxgl-ctrl-helicopter')[0].classList.remove('active');
-            document.getElementsByClassName('mapboxgl-ctrl-heading')[0].classList.remove('active');
-        }
-    }, {
-        className: 'mapboxgl-ctrl-helicopter',
-        title: 'ヘリコプター追跡モード',
-        eventHandler(event) {
-            trackingMode = 'helicopter';
-            trackingBaseBearing = map.getBearing() - performance.now() / 400;
-            document.getElementsByClassName('mapboxgl-ctrl-normal')[0].classList.remove('active');
-            document.getElementsByClassName('mapboxgl-ctrl-helicopter')[0].classList.add('active');
-            document.getElementsByClassName('mapboxgl-ctrl-heading')[0].classList.remove('active');
-        }
-    }, {
-        className: 'mapboxgl-ctrl-heading',
-        title: '進行方向追跡モード',
-        eventHandler() {
-            trackingMode = 'heading';
-            document.getElementsByClassName('mapboxgl-ctrl-normal')[0].classList.remove('active');
-            document.getElementsByClassName('mapboxgl-ctrl-helicopter')[0].classList.remove('active');
-            document.getElementsByClassName('mapboxgl-ctrl-heading')[0].classList.add('active');
-        }
-    }]));
+	map.addControl(new mapboxgl.NavigationControl());
+	map.addControl(new mapboxgl.FullscreenControl({container: document.getElementById('map')}));
+	map.addControl(new MapboxGLButtonControl([{
+		className: 'mapboxgl-ctrl-normal active',
+		title: 'ノーマル追跡モード',
+		eventHandler() {
+			trackingMode = 'normal';
+			document.getElementsByClassName('mapboxgl-ctrl-normal')[0].classList.add('active');
+			document.getElementsByClassName('mapboxgl-ctrl-helicopter')[0].classList.remove('active');
+			document.getElementsByClassName('mapboxgl-ctrl-heading')[0].classList.remove('active');
+		}
+	}, {
+		className: 'mapboxgl-ctrl-helicopter',
+		title: 'ヘリコプター追跡モード',
+		eventHandler(event) {
+			trackingMode = 'helicopter';
+			trackingBaseBearing = map.getBearing() - performance.now() / 400;
+			document.getElementsByClassName('mapboxgl-ctrl-normal')[0].classList.remove('active');
+			document.getElementsByClassName('mapboxgl-ctrl-helicopter')[0].classList.add('active');
+			document.getElementsByClassName('mapboxgl-ctrl-heading')[0].classList.remove('active');
+		}
+	}, {
+		className: 'mapboxgl-ctrl-heading',
+		title: '進行方向追跡モード',
+		eventHandler() {
+			trackingMode = 'heading';
+			document.getElementsByClassName('mapboxgl-ctrl-normal')[0].classList.remove('active');
+			document.getElementsByClassName('mapboxgl-ctrl-helicopter')[0].classList.remove('active');
+			document.getElementsByClassName('mapboxgl-ctrl-heading')[0].classList.add('active');
+		}
+	}]));
 
 	map.addSource('route', {
 		type: 'geojson',
@@ -4162,6 +4171,106 @@ map.on('load', function () {
 		}
 	});
 
+	map.addLayer({
+		id: 'runners',
+		type: 'custom',
+		renderingMode: '3d',
+		onAdd: (map, gl) => {
+			const me = this,
+				{_fov, width, height} = map.transform,
+				renderer = me.renderer = new THREE.WebGLRenderer({
+					canvas: map.getCanvas(),
+					context: gl
+				}),
+				scene = me.scene = new THREE.Scene(),
+				light = me.light = new THREE.DirectionalLight(0xffffff, .8),
+				ambientLight = me.ambientLight = new THREE.AmbientLight(0xffffff, .4);
+
+			renderer.autoClear = false;
+
+			scene.add(light);
+			scene.add(ambientLight);
+
+			// This is needed to avoid a black screen with empty scene
+			// scene.add(new Mesh());
+
+			const loader = new THREE.GLTFLoader();
+			loader.load('runner.glb', gltf => {
+				const mesh = gltf.scene;
+
+				mesh.position.x = 0;
+				mesh.position.y = 0;
+				mesh.position.z = 0;
+				mesh.rotation.x = Math.PI / 2;
+				mesh.rotation.y = Math.PI;
+				mesh.rotation.z = 0;
+
+				for (let i = 1; i < teams.length; i++) {
+					const team = teams[i],
+						object = THREE.SkeletonUtils.clone(mesh);
+
+					const texture = new THREE.TextureLoader().load(`texture/${i}.png`);
+					texture.encoding = THREE.sRGBEncoding;
+					texture.flipY = false;
+					object.traverse(child => {
+						if (child.isMesh) {
+							child.material = new THREE.MeshPhongMaterial({
+								map: texture,
+								transparent: true
+							});
+						}
+					});
+
+					team.object = new THREE.Object3D();
+					team.object.scale.x = modelScale * 80;
+					team.object.scale.y = modelScale * 80;
+					team.object.scale.z = modelScale * 80;
+					team.object.add(object);
+
+					scene.add(team.object);
+
+					team.mixer = new THREE.AnimationMixer(team.object);
+					team.mixer.clipAction(gltf.animations[2]).play();
+				}
+
+
+				function animate() {
+					for (let i = 1; i < teams.length; i++) {
+						teams[i].mixer.setTime((performance.now() / 750 + i / teams.length) % (20 / 24));
+					}
+					requestAnimationFrame(animate);
+				}
+
+				animate();
+
+			});
+
+			me.map = map;
+			me.camera = new THREE.Camera();
+
+			/*map.on('resize', event => {
+				const {width, height} = event.target.transform;
+
+				me.camera.aspect = width / height;
+				me.camera.updateProjectionMatrix();
+			});*/
+		},
+		render: (gl, matrix) => {
+			const me = this,
+				m = new THREE.Matrix4().fromArray(matrix),
+				l = new THREE.Matrix4()
+					.makeTranslation(modelOrigin.x, modelOrigin.y, modelOrigin.z)
+					.scale(new THREE.Vector3(1, -1, 1)),
+				rad = THREE.MathUtils.degToRad(me.map.getBearing() + 30);
+
+			me.camera.projectionMatrix = m.multiply(l);
+			me.light.position.set(-Math.sin(rad), -Math.cos(rad), SQRT3).normalize();
+			me.renderer.resetState();
+			me.renderer.render(me.scene, me.camera);
+			me.map.triggerRepaint();
+		}
+	}, 'building-3d');
+
 	[
 		{name: 'スタート 読売新聞社前', index: 0},
 		{name: '鶴見中継所', index: 84},
@@ -4170,7 +4279,7 @@ map.on('load', function () {
 		{name: '小田原中継所', index: 510},
 		{name: 'ゴール 芦ノ湖', index: 1012}
 	].forEach(({name, index}) => {
-		new AnimatedPopup({ closeButton: false, closeOnClick: false })
+		new AnimatedPopup({closeButton: false, closeOnClick: false })
 			.setLngLat(turf.getCoord(turf.along(routeFeature, distances[0][index])))
 			.setText(name)
 			.addTo(map);
@@ -4192,16 +4301,28 @@ map.on('load', function () {
 */
 	for (let i = teams.length - 1; i > 0; i--) {
 		const team = teams[i];
-		const popup = new AnimatedPopup({ offset: 25, closeButton: false })
+		const popup = new AnimatedPopup({ anchor: 'top', closeButton: false })
 			.setText(team.name);
 		const el = document.createElement('div');
 
-		el.style.backgroundImage = `url('${i}.png')`;
+		el.style.backgroundImage = `url('marker/${i}.png')`;
 		el.style.backgroundSize = 'cover';
 		el.style.width = '50px';
 		el.style.height = '50px';
 		el.style.borderRadius = '50%';
 		el.style.cursor = 'pointer';
+
+		el.addEventListener('mouseenter', event => {
+			if (!popup.isOpen()) {
+				team.marker.togglePopup();
+			}
+		});
+
+		el.addEventListener('mouseleave', event => {
+			if (popup.isOpen()) {
+				team.marker.togglePopup();
+			}
+		});
 
 		el.addEventListener('click', event => {
 			const now = Date.now();
@@ -4229,9 +4350,10 @@ map.on('load', function () {
 				trackingBaseBearing = map.getBearing() - performance.now() / 400;
 			}, 500);
 
+			event.stopPropagation();
 		});
 
-		team.marker = new mapboxgl.Marker(el)
+		team.marker = new mapboxgl.Marker({element: el})
 			.setLngLat([0, 0])
 			.setPopup(popup)
 			.addTo(map);
@@ -4241,17 +4363,43 @@ map.on('load', function () {
 		trackingTeam = undefined;
 	});
 
+	map.on('zoom', event => {
+		for (let i = 1; i < teams.length; i++) {
+			const team = teams[i];
+
+			if (team.object) {
+				team.object.scale.x = modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
+				team.object.scale.y = modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
+				team.object.scale.z = modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
+			}
+		}
+	})
+
+	map.on('move', event => {
+		for (let i = 1; i < teams.length; i++) {
+			const team = teams[i];
+
+			if (team.object) {
+				team.object.scale.x = modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
+				team.object.scale.y = modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
+				team.object.scale.z = modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
+			}
+		}
+	})
+
 	let lastDataLoad = 0;
 	let lastDataLoadComplete = 0;
 
 	function frame() {
 		const now = Date.now();
 
-		if (now >= lastDataLoad + 10000) {
+		if (now >= lastDataLoad + 10000 + 100000000) {
 			fetch('https://mini-tokyo.appspot.com/hakone')
 				.then(response => response.json())
 				.then(result => {
 					// TEST
+					const s = 0;
+					const f = 30;
 					result = {
 						"status": {
 							"msg": "",
@@ -4267,28 +4415,28 @@ map.on('load', function () {
 							"runner": "20211204.1"
 						},
 						"points":[
-							[9, 35.68676, 139.76462, 1, 0, 299, 0, 1003, 5, 1639032236.17],
-							[0, 35.68676, 139.76462, 1, 0, 298, 0, 1003, 5, 1639030440.774],
-							[8, 35.68676, 139.76462, 1, 0, 297, 0, 1003, 5, 1639032204.888],
-							[10, 35.68676, 139.76462, 1, 0, 296, 0, 1003, 5, 1639031648.952],
-							[4, 35.68676, 139.76462, 1, 0, 295, 0, 1003, 5, 1639032029.69],
-							[2, 35.68676, 139.76462, 1, 0, 294, 0, 1003, 5, 1639032302.608],
-							[5, 35.68676, 139.76462, 1, 0, 293, 0, 1003, 5, 1639031554.147],
-							[11, 35.68676, 139.76462, 1, 0, 292, 0, 1003, 5, 1639031573.391],
-							[14, 35.68676, 139.76462, 1, 0, 291, 0, 1003, 5, 1639032272.438],
-							[3, 35.68676, 139.76462, 1, 0, 290, 0, 1003, 5, 1639031596.8],
-							[7, 35.68676, 139.76462, 1, 0, 289, 0, 1003, 5, 1639031509.367],
-							[1, 35.68676, 139.76462, 1, 0, 288, 0, 1003, 5, 1639032106.803],
-							[19, 35.68676, 139.76462, 1, 0, 287, 0, 1003, 5, 1639031487.288],
-							[6, 35.68676, 139.76462, 1, 0, 286, 0, 1003, 5, 1639031476.082],
-							[13, 35.68676, 139.76462, 1, 0, 285, 0, 1003, 5, 1639031537.962],
-							[16, 35.68676, 139.76462, 1, 0, 284, 0, 1003, 5, 1639031438.31],
-							[18, 35.68676, 139.76462, 1, 0, 283, 0, 1003, 5, 1639031414.513],
-							[15, 35.68676, 139.76462, 1, 0, 282, 0, 1003, 5, 1639031434.822],
-							[17, 35.68676, 139.76462, 1, 0, 281, 0, 1003, 5, 1639031646.906],
-							[12, 35.68676, 139.76462, 1, 0, 280, 0, 1003, 5, 1639031384.572],
-							[21, 35.68676, 139.76462, 1, 0, 279, 0, 1003, 5, 1639031612.565],
-							[20, 35.68676, 139.76462, 1, 0, 278, 0, 1003, 5, 1639032351.747]
+							[9, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[0, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[8, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[10, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[4, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[2, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[5, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[11, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[14, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[3, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[7, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[1, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - f - 1],
+							[19, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[6, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[13, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[16, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[18, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[15, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[17, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[12, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[21, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
+							[20, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1]
 						]
 					};
 
@@ -4321,7 +4469,7 @@ map.on('load', function () {
 						});
 					}
 					if (!lastDataLoadComplete) {
-						const point = turf.along(routeFeature, teams[9].distance + teams[9].speed * (now - teams[9].ts * 1000) / 3600000);
+						const point = turf.along(routeFeature, teams[1].distance + teams[1].speed * (now - teams[1].ts * 1000) / 3600000);
 
 						map.flyTo({
 							center: turf.getCoord(point)
@@ -4338,9 +4486,29 @@ map.on('load', function () {
 //				const point = turf.along(routeFeature, now < lastDataLoadComplete + 1000 ?
 //					team.adjustedDistance + team.adjustedSpeed * (now - team.ts * 1000) / 3600000 :
 //					team.distance + team.speed * (now - team.ts * 1000) / 3600000);
-				const point = turf.along(routeFeature, team.distance + team.speed * (now - team.ts * 1000) / 3600000);
+				const point = turf.along(routeFeature, team.distance + team.speed * (now - team.ts * 1000) / 3600000),
+					point2 = turf.along(routeFeature, team.distance + team.speed * (now - team.ts * 1000) / 3600000 + 0.001),
+					bearing = turf.bearing(point, point2),
+					coord = turf.getCoord(point);
 
-				team.marker.setLngLat(turf.getCoord(point));
+				if (i === 1) {
+					const elevation = map.queryTerrainElevation(coord);
+					modelOrigin = mapboxgl.MercatorCoordinate.fromLngLat(coord, elevation);
+					modelScale = modelOrigin.meterInMercatorCoordinateUnits();
+				}
+
+				team.marker.setLngLat(coord)
+					.setOffset([0, -Math.pow(2, clamp(map.getZoom(), 20, 24) - 20) * 64 * (Math.sin(THREE.MathUtils.degToRad(map.getPitch())) + 0.3) - 25]);
+
+				if (team.object) {
+					const elevation = map.queryTerrainElevation(coord),
+						mCoord = mapboxgl.MercatorCoordinate.fromLngLat(coord, elevation);
+
+					team.object.position.x = mCoord.x - modelOrigin.x;
+					team.object.position.y = -(mCoord.y - modelOrigin.y);
+					team.object.position.z = mCoord.z - modelOrigin.z;
+					team.object.rotation.z = THREE.MathUtils.degToRad(-bearing);
+				}
 
 				if (trackingTeam === i && !map._zooming && !map._rotating && !map._pitching) {
 					if (trackingMode === 'normal') {
@@ -4353,11 +4521,9 @@ map.on('load', function () {
 							bearing: (trackingBaseBearing + performance.now() / 400) % 360
 						});
 					} else if (trackingMode === 'heading') {
-						const point2 = turf.along(routeFeature, team.distance + team.speed * (now - team.ts * 1000) / 3600000 + 0.001);
-
 						map.jumpTo({
 							center: turf.getCoord(point),
-							bearing: turf.bearing(point, point2)
+							bearing
 						});
 					}
 				}
@@ -4373,50 +4539,50 @@ map.on('load', function () {
 
 class MapboxGLButtonControl {
 
-    constructor(optionArray) {
-        this._options = optionArray.map(options => ({
-            className: options.className || '',
-            title: options.title || '',
-            eventHandler: options.eventHandler
-        }));
-    }
+	constructor(optionArray) {
+		this._options = optionArray.map(options => ({
+			className: options.className || '',
+			title: options.title || '',
+			eventHandler: options.eventHandler
+		}));
+	}
 
-    onAdd(map) {
-        const me = this;
+	onAdd(map) {
+		const me = this;
 
-        me._map = map;
+		me._map = map;
 
-        me._container = document.createElement('div');
-        me._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+		me._container = document.createElement('div');
+		me._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
 
-        me._buttons = me._options.map(options => {
-            const button = document.createElement('button'),
-                icon = document.createElement('span'),
-                {className, title, eventHandler} = options;
+		me._buttons = me._options.map(options => {
+			const button = document.createElement('button'),
+				icon = document.createElement('span'),
+				{className, title, eventHandler} = options;
 
-            button.className = className;
-            button.type = 'button';
-            button.title = title;
-            button.setAttribute('aria-label', title);
-            button.onclick = eventHandler;
+			button.className = className;
+			button.type = 'button';
+			button.title = title;
+			button.setAttribute('aria-label', title);
+			button.onclick = eventHandler;
 
-            icon.className = 'mapboxgl-ctrl-icon';
-            icon.setAttribute('aria-hidden', true);
-            button.appendChild(icon);
+			icon.className = 'mapboxgl-ctrl-icon';
+			icon.setAttribute('aria-hidden', true);
+			button.appendChild(icon);
 
-            me._container.appendChild(button);
+			me._container.appendChild(button);
 
-            return button;
-        });
+			return button;
+		});
 
-        return me._container;
-    }
+		return me._container;
+	}
 
-    onRemove() {
-        const me = this;
+	onRemove() {
+		const me = this;
 
-        me._container.parentNode.removeChild(me._container);
-        me._map = undefined;
-    }
+		me._container.parentNode.removeChild(me._container);
+		me._map = undefined;
+	}
 
 }
