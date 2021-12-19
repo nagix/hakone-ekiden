@@ -4096,9 +4096,83 @@ let modelScale = modelOrigin.meterInMercatorCoordinateUnits();
 
 let trackingTeam, trackingBaseBearing;
 let trackingMode = 'normal';
+let trackingAnimationID;
 
 function clamp(value, lower, upper) {
 	return Math.min(Math.max(value, lower), upper);
+}
+
+function easeOutQuart(t) {
+	return -((t = t - 1) * t * t * t - 1);
+}
+
+function jumpTo(options) {
+	const currentBearing = map.getBearing(),
+		scrollZooming = map.scrollZoom._active;
+	let {center, bearing, centerFactor, bearingFactor} = options;
+
+	if (trackingMode === 'normal') {
+		bearing = currentBearing;
+	} else if (trackingMode === 'helicopter') {
+		bearing = (trackingBaseBearing + performance.now() / 400) % 360;
+	} else if (bearingFactor >= 0) {
+		bearing = currentBearing + ((bearing - currentBearing + 540) % 360 - 180) * bearingFactor;
+	}
+
+	if (centerFactor >= 0) {
+		const {lng: fromLng, lat: fromLat} = map.getCenter(),
+			[toLng, toLat] = center;
+
+		center = new mapboxgl.LngLat(
+			fromLng + (toLng - fromLng) * centerFactor,
+			fromLat + (toLat - fromLat) * centerFactor
+		);
+	}
+
+	map.jumpTo({center, bearing});
+
+	// Workaround for the issue of the scroll zoom during tracking
+	if (scrollZooming) {
+		map.scrollZoom._active = true;
+	}
+}
+
+function stopTrackingAnimation() {
+	if (trackingAnimationID) {
+		cancelAnimationFrame(trackingAnimationID);
+		trackingAnimationID = undefined;
+	}
+}
+
+function startTrackingAnimation() {
+	const start = performance.now();
+	let t2 = 0;
+
+	trackingBaseBearing = map.getBearing() - start / 400;
+
+	function animate() {
+		const elapsed = Math.min(performance.now() - start, 1000),
+			t1 = easeOutQuart(elapsed / 1000),
+			factor = 1 - (1 - t1) / (1 - t2),
+			{coord, bearing} = teams[trackingTeam];
+
+		jumpTo({
+			center: coord,
+			bearing,
+			centerFactor: factor,
+			bearingFactor: factor
+		});
+		t2 = t1;
+
+		if (elapsed === 1000) {
+			trackingAnimationID = undefined;
+		} else {
+			trackingAnimationID = requestAnimationFrame(animate);
+		}
+	}
+
+	stopTrackingAnimation();
+	animate();
 }
 
 mapboxgl.accessToken = 'pk.eyJ1IjoibmFnaXgiLCJhIjoiY2tqZXZ1MjQ0MGE3MDJ6bzc2cmNyaWlrOSJ9.QjrikO3RTE20AMURILSTWg';
@@ -4107,7 +4181,7 @@ var map = new mapboxgl.Map({
 	style: 'style.json',
 	center: [139.76442, 35.6875],
 //	center: [139.024883, 35.189139],
-	zoom: 16.01,
+	zoom: 17,
 	pitch: 60
 });
 
@@ -4119,6 +4193,7 @@ map.on('load', function () {
 		title: 'ノーマル追跡モード',
 		eventHandler() {
 			trackingMode = 'normal';
+			startTrackingAnimation();
 			document.getElementsByClassName('mapboxgl-ctrl-normal')[0].classList.add('active');
 			document.getElementsByClassName('mapboxgl-ctrl-helicopter')[0].classList.remove('active');
 			document.getElementsByClassName('mapboxgl-ctrl-heading')[0].classList.remove('active');
@@ -4128,7 +4203,7 @@ map.on('load', function () {
 		title: 'ヘリコプター追跡モード',
 		eventHandler(event) {
 			trackingMode = 'helicopter';
-			trackingBaseBearing = map.getBearing() - performance.now() / 400;
+			startTrackingAnimation();
 			document.getElementsByClassName('mapboxgl-ctrl-normal')[0].classList.remove('active');
 			document.getElementsByClassName('mapboxgl-ctrl-helicopter')[0].classList.add('active');
 			document.getElementsByClassName('mapboxgl-ctrl-heading')[0].classList.remove('active');
@@ -4138,6 +4213,7 @@ map.on('load', function () {
 		title: '進行方向追跡モード',
 		eventHandler() {
 			trackingMode = 'heading';
+			startTrackingAnimation();
 			document.getElementsByClassName('mapboxgl-ctrl-normal')[0].classList.remove('active');
 			document.getElementsByClassName('mapboxgl-ctrl-helicopter')[0].classList.remove('active');
 			document.getElementsByClassName('mapboxgl-ctrl-heading')[0].classList.add('active');
@@ -4242,7 +4318,6 @@ map.on('load', function () {
 				}
 
 				animate();
-
 			});
 
 			me.map = map;
@@ -4279,7 +4354,7 @@ map.on('load', function () {
 		{name: '小田原中継所', index: 510},
 		{name: 'ゴール 芦ノ湖', index: 1012}
 	].forEach(({name, index}) => {
-		new AnimatedPopup({closeButton: false, closeOnClick: false })
+		new AnimatedPopup({closeButton: false, closeOnClick: false})
 			.setLngLat(turf.getCoord(turf.along(routeFeature, distances[0][index])))
 			.setText(name)
 			.addTo(map);
@@ -4293,7 +4368,7 @@ map.on('load', function () {
 		{name: '鶴見中継所', index: 916},
 		{name: 'ゴール 読売新聞社前', index: 1003}
 	].forEach(({name, index}) => {
-		new AnimatedPopup({ closeButton: false, closeOnClick: false })
+		new AnimatedPopup({closeButton: false, closeOnClick: false})
 			.setLngLat(turf.getCoord(turf.along(routeFeature, distances[1][index])))
 			.setText(name)
 			.addTo(map);
@@ -4301,16 +4376,12 @@ map.on('load', function () {
 */
 	for (let i = teams.length - 1; i > 0; i--) {
 		const team = teams[i];
-		const popup = new AnimatedPopup({ anchor: 'top', closeButton: false })
+		const popup = new AnimatedPopup({anchor: 'top', closeButton: false})
 			.setText(team.name);
 		const el = document.createElement('div');
 
+		el.className = 'marker';
 		el.style.backgroundImage = `url('marker/${i}.png')`;
-		el.style.backgroundSize = 'cover';
-		el.style.width = '50px';
-		el.style.height = '50px';
-		el.style.borderRadius = '50%';
-		el.style.cursor = 'pointer';
 
 		el.addEventListener('mouseenter', event => {
 			if (!popup.isOpen()) {
@@ -4331,25 +4402,9 @@ map.on('load', function () {
 			if (!isNaN(team.distance) && !isNaN(team.speed) && !isNaN(team.ts)) {
 				const point = turf.along(routeFeature, team.distance + team.speed * (now - team.ts * 1000) / 3600000);
 
-				if (trackingMode === 'normal' || trackingMode === 'helicopter') {
-					map.easeTo({
-						center: turf.getCoord(point)
-					});
-				} else if (trackingMode === 'heading') {
-					const point2 = turf.along(routeFeature, team.distance + team.speed * (now - team.ts * 1000) / 3600000 + 0.001);
-
-					map.easeTo({
-						center: turf.getCoord(point),
-						bearing: turf.bearing(point, point2)
-					});
-				}
-			}
-
-			setTimeout(() => {
 				trackingTeam = i;
-				trackingBaseBearing = map.getBearing() - performance.now() / 400;
-			}, 500);
-
+				startTrackingAnimation();
+			}
 			event.stopPropagation();
 		});
 
@@ -4363,35 +4418,32 @@ map.on('load', function () {
 		trackingTeam = undefined;
 	});
 
-	map.on('zoom', event => {
+	function updateScales() {
 		for (let i = 1; i < teams.length; i++) {
-			const team = teams[i];
+			const {object} = teams[i];
 
-			if (team.object) {
-				team.object.scale.x = modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
-				team.object.scale.y = modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
-				team.object.scale.z = modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
+			if (object) {
+				const {scale} = object;
+
+				scale.x = scale.y = scale.z =
+					modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
 			}
 		}
-	})
+	}
 
-	map.on('move', event => {
-		for (let i = 1; i < teams.length; i++) {
-			const team = teams[i];
-
-			if (team.object) {
-				team.object.scale.x = modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
-				team.object.scale.y = modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
-				team.object.scale.z = modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
-			}
-		}
-	})
+	map.on('zoom', updateScales)
+	map.on('move', updateScales)
+	map.on('resize', updateScales)
 
 	let lastDataLoad = 0;
 	let lastDataLoadComplete = 0;
 
 	function frame() {
-		const now = Date.now();
+		const now = Date.now(),
+			camera = map.getFreeCameraOptions().position.toLngLat(),
+			cameraCoord = [camera.lng, camera.lat],
+			center = map.getCenter(),
+			baseDistance = turf.distance(cameraCoord, [center.lng, center.lat]);
 
 		if (now >= lastDataLoad + 10000 + 100000000) {
 			fetch('https://mini-tokyo.appspot.com/hakone')
@@ -4488,8 +4540,9 @@ map.on('load', function () {
 //					team.distance + team.speed * (now - team.ts * 1000) / 3600000);
 				const point = turf.along(routeFeature, team.distance + team.speed * (now - team.ts * 1000) / 3600000),
 					point2 = turf.along(routeFeature, team.distance + team.speed * (now - team.ts * 1000) / 3600000 + 0.001),
-					bearing = turf.bearing(point, point2),
-					coord = turf.getCoord(point);
+					bearing = team.bearing = turf.bearing(point, point2),
+					coord = team.coord = turf.getCoord(point),
+					distance = turf.distance(cameraCoord, coord);
 
 				if (i === 1) {
 					const elevation = map.queryTerrainElevation(coord);
@@ -4498,7 +4551,7 @@ map.on('load', function () {
 				}
 
 				team.marker.setLngLat(coord)
-					.setOffset([0, -Math.pow(2, clamp(map.getZoom(), 20, 24) - 20) * 64 * (Math.sin(THREE.MathUtils.degToRad(map.getPitch())) + 0.3) - 25]);
+					.setOffset([0, -Math.pow(2, clamp(map.getZoom(), 20, 24) - 20) * 64 * Math.sin(THREE.MathUtils.degToRad(map.getPitch())) * ((baseDistance + .01) / (distance + .01)) - 35]);
 
 				if (team.object) {
 					const elevation = map.queryTerrainElevation(coord),
@@ -4510,22 +4563,12 @@ map.on('load', function () {
 					team.object.rotation.z = THREE.MathUtils.degToRad(-bearing);
 				}
 
-				if (trackingTeam === i && !map._zooming && !map._rotating && !map._pitching) {
-					if (trackingMode === 'normal') {
-						map.jumpTo({
-							center: turf.getCoord(point)
-						});
-					} else if (trackingMode === 'helicopter') {
-						map.jumpTo({
-							center: turf.getCoord(point),
-							bearing: (trackingBaseBearing + performance.now() / 400) % 360
-						});
-					} else if (trackingMode === 'heading') {
-						map.jumpTo({
-							center: turf.getCoord(point),
-							bearing
-						});
-					}
+				if (!trackingAnimationID && trackingTeam === i && !map._zooming && !map._rotating && !map._pitching) {
+					jumpTo({
+						center: coord,
+						bearing,
+						bearingFactor: .02
+					});
 				}
 				map.triggerRepaint();
 			}
