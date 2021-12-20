@@ -4184,8 +4184,8 @@ function startTrackingAnimation() {
 	trackingBaseBearing = map.getBearing() - start / 400;
 
 	function animate() {
-		const elapsed = Math.min(performance.now() - start, 2000),
-			t1 = easeOutQuart(elapsed / 2000),
+		const elapsed = Math.min(performance.now() - start, 3000),
+			t1 = easeOutQuart(elapsed / 3000),
 			factor = 1 - (1 - t1) / (1 - t2),
 			{coord, bearing} = teams[trackingTeam];
 
@@ -4197,7 +4197,7 @@ function startTrackingAnimation() {
 		});
 		t2 = t1;
 
-		if (elapsed === 2000) {
+		if (elapsed === 3000) {
 			trackingAnimationID = undefined;
 		} else {
 			trackingAnimationID = requestAnimationFrame(animate);

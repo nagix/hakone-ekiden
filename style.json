@@ -364,7 +364,8 @@
                 "text-halo-width": 1,
                 "text-halo-blur": 1
             },
-            "source-layer": "road"
+            "source-layer": "road",
+            "maxzoom": 18
         },
         {
             "minzoom": 15,
