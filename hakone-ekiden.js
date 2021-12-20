@@ -4086,6 +4086,16 @@ const teams = [{
 	name: '関東学生連合',
 }];
 
+const trackingModes = [
+	'auto',
+	'normal',
+	'front',
+	'front-above',
+	'back',
+	'back-above',
+	'helicopter'
+];
+
 const SQRT3 = Math.sqrt(3);
 
 const routeFeature = turf.lineString(routes[0]);
@@ -4095,7 +4105,9 @@ let modelOrigin = mapboxgl.MercatorCoordinate.fromLngLat([139.76442, 35.6875]);
 let modelScale = modelOrigin.meterInMercatorCoordinateUnits();
 
 let trackingTeam, trackingBaseBearing;
-let trackingMode = 'normal';
+let trackingMode = 'helicopter';
+let autoTrackingMode = true;
+let lastViewSwitch = 0;
 let trackingAnimationID;
 
 function clamp(value, lower, upper) {
@@ -4107,29 +4119,50 @@ function easeOutQuart(t) {
 }
 
 function jumpTo(options) {
-	const currentBearing = map.getBearing(),
+	const currentZoom = map.getZoom(),
+		currentBearing = map.getBearing(),
+		currentPitch = map.getPitch(),
 		scrollZooming = map.scrollZoom._active;
-	let {center, bearing, centerFactor, bearingFactor} = options;
+	let zoom, pitch,
+		{center, bearing, factor, bearingFactor} = options;
 
 	if (trackingMode === 'normal') {
+		zoom = currentZoom;
 		bearing = currentBearing;
+		pitch = currentPitch;
 	} else if (trackingMode === 'helicopter') {
+		zoom = 17;
 		bearing = (trackingBaseBearing + performance.now() / 400) % 360;
-	} else if (bearingFactor >= 0) {
-		bearing = currentBearing + ((bearing - currentBearing + 540) % 360 - 180) * bearingFactor;
+		pitch = 60;
+	} else {
+		if (trackingMode === 'front' || trackingMode === 'front-above') {
+			bearing = (bearing + 360) % 360 - 180;
+		}
+		if (bearingFactor >= 0) {
+			bearing = currentBearing + ((bearing - currentBearing + 540) % 360 - 180) * bearingFactor;
+		}
+		if (trackingMode === 'front' || trackingMode === 'back') {
+			zoom = 21;
+			pitch = 85;
+		} else {
+			zoom = 17;
+			pitch = 60;
+		}
 	}
 
-	if (centerFactor >= 0) {
+	if (factor >= 0) {
 		const {lng: fromLng, lat: fromLat} = map.getCenter(),
 			[toLng, toLat] = center;
 
 		center = new mapboxgl.LngLat(
-			fromLng + (toLng - fromLng) * centerFactor,
-			fromLat + (toLat - fromLat) * centerFactor
+			fromLng + (toLng - fromLng) * factor,
+			fromLat + (toLat - fromLat) * factor
 		);
+		zoom = currentZoom + (zoom - currentZoom) * factor;
+		pitch = currentPitch + (pitch - currentPitch) * factor;
 	}
 
-	map.jumpTo({center, bearing});
+	map.jumpTo({center, zoom, bearing, pitch});
 
 	// Workaround for the issue of the scroll zoom during tracking
 	if (scrollZooming) {
@@ -4151,20 +4184,20 @@ function startTrackingAnimation() {
 	trackingBaseBearing = map.getBearing() - start / 400;
 
 	function animate() {
-		const elapsed = Math.min(performance.now() - start, 1000),
-			t1 = easeOutQuart(elapsed / 1000),
+		const elapsed = Math.min(performance.now() - start, 2000),
+			t1 = easeOutQuart(elapsed / 2000),
 			factor = 1 - (1 - t1) / (1 - t2),
 			{coord, bearing} = teams[trackingTeam];
 
 		jumpTo({
 			center: coord,
 			bearing,
-			centerFactor: factor,
+			factor: factor,
 			bearingFactor: factor
 		});
 		t2 = t1;
 
-		if (elapsed === 1000) {
+		if (elapsed === 2000) {
 			trackingAnimationID = undefined;
 		} else {
 			trackingAnimationID = requestAnimationFrame(animate);
@@ -4189,36 +4222,48 @@ map.on('load', function () {
 	map.addControl(new mapboxgl.NavigationControl());
 	map.addControl(new mapboxgl.FullscreenControl({container: document.getElementById('map')}));
 	map.addControl(new MapboxGLButtonControl([{
-		className: 'mapboxgl-ctrl-normal active',
-		title: 'ノーマル追跡モード',
+		className: 'mapboxgl-ctrl-camera',
+		title: 'カメラ切り替え',
 		eventHandler() {
-			trackingMode = 'normal';
-			startTrackingAnimation();
-			document.getElementsByClassName('mapboxgl-ctrl-normal')[0].classList.add('active');
-			document.getElementsByClassName('mapboxgl-ctrl-helicopter')[0].classList.remove('active');
-			document.getElementsByClassName('mapboxgl-ctrl-heading')[0].classList.remove('active');
+			document.getElementById('views-bg').style.display = 'block';
 		}
 	}, {
-		className: 'mapboxgl-ctrl-helicopter',
-		title: 'ヘリコプター追跡モード',
-		eventHandler(event) {
-			trackingMode = 'helicopter';
-			startTrackingAnimation();
-			document.getElementsByClassName('mapboxgl-ctrl-normal')[0].classList.remove('active');
-			document.getElementsByClassName('mapboxgl-ctrl-helicopter')[0].classList.add('active');
-			document.getElementsByClassName('mapboxgl-ctrl-heading')[0].classList.remove('active');
-		}
-	}, {
-		className: 'mapboxgl-ctrl-heading',
-		title: '進行方向追跡モード',
+		className: 'mapboxgl-ctrl-info',
+		title: '箱根駅伝 3D について',
 		eventHandler() {
-			trackingMode = 'heading';
-			startTrackingAnimation();
-			document.getElementsByClassName('mapboxgl-ctrl-normal')[0].classList.remove('active');
-			document.getElementsByClassName('mapboxgl-ctrl-helicopter')[0].classList.remove('active');
-			document.getElementsByClassName('mapboxgl-ctrl-heading')[0].classList.add('active');
+			document.getElementById('info-bg').style.display = 'block';
 		}
 	}]));
+
+	document.getElementById('views-bg').addEventListener('click', () => {
+		document.getElementById('views-bg').style.display = 'none';
+	});
+
+	for (const mode of trackingModes) {
+		const e = document.getElementById(`${mode}-view`);
+		e.addEventListener('click', e => {
+			document.querySelector('.menu div.active').classList.remove('active');
+			e.target.classList.add('active');
+
+			if (mode === 'auto') {
+				autoTrackingMode = true;
+			} else {
+				trackingMode = mode;
+				autoTrackingMode = false;
+			}
+			if (trackingTeam) {
+				if (autoTrackingMode) {
+					trackingMode = trackingModes[Math.floor(Math.random() * (trackingModes.length - 2)) + 2];
+					lastViewSwitch = Date.now();
+				}
+				startTrackingAnimation();
+			}
+		});
+	}
+
+	document.getElementById('info-bg').addEventListener('click', () => {
+		document.getElementById('info-bg').style.display = 'none';
+	});
 
 	map.addSource('route', {
 		type: 'geojson',
@@ -4403,6 +4448,10 @@ map.on('load', function () {
 				const point = turf.along(routeFeature, team.distance + team.speed * (now - team.ts * 1000) / 3600000);
 
 				trackingTeam = i;
+				if (autoTrackingMode) {
+					trackingMode = trackingModes[Math.floor(Math.random() * (trackingModes.length - 2)) + 2];
+					lastViewSwitch = Date.now();
+				}
 				startTrackingAnimation();
 			}
 			event.stopPropagation();
@@ -4450,8 +4499,8 @@ map.on('load', function () {
 				.then(response => response.json())
 				.then(result => {
 					// TEST
-					const s = 0;
-					const f = 30;
+					const s = 90;
+					const f = 300;
 					result = {
 						"status": {
 							"msg": "",
@@ -4572,6 +4621,12 @@ map.on('load', function () {
 				}
 				map.triggerRepaint();
 			}
+		}
+
+		if (trackingTeam && autoTrackingMode && now >= lastViewSwitch + 30000) {
+			trackingMode = trackingModes[Math.floor(Math.random() * (trackingModes.length - 2)) + 2];
+			startTrackingAnimation();
+			lastViewSwitch = now;
 		}
 
 		requestAnimationFrame(frame);
