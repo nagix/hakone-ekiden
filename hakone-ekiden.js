@@ -4484,15 +4484,23 @@ map.on('load', function () {
 	map.on('move', updateScales)
 	map.on('resize', updateScales)
 
+	// Workaround to update pitch using constraints
+	const {get: getPitch, set: setPitch} = Object.getOwnPropertyDescriptor(map.transform.constructor.prototype, 'pitch');
+	Object.defineProperty(map.transform, 'pitch', {
+		get: getPitch,
+		set: function(pitch) {
+			setPitch.call(this, pitch);
+			this._constrain();
+			this._calcMatrices();
+		}
+	});
+
 	let lastDataLoad = 0;
 	let lastDataLoadComplete = 0;
 
 	function frame() {
 		const now = Date.now(),
-			camera = map.getFreeCameraOptions().position.toLngLat(),
-			cameraCoord = [camera.lng, camera.lat],
-			center = map.getCenter(),
-			baseDistance = turf.distance(cameraCoord, [center.lng, center.lat]);
+			transform = map.transform;
 
 		if (now >= lastDataLoad + 10000 + 100000000) {
 			fetch('https://mini-tokyo.appspot.com/hakone')
@@ -4590,8 +4598,7 @@ map.on('load', function () {
 				const point = turf.along(routeFeature, team.distance + team.speed * (now - team.ts * 1000) / 3600000),
 					point2 = turf.along(routeFeature, team.distance + team.speed * (now - team.ts * 1000) / 3600000 + 0.001),
 					bearing = team.bearing = turf.bearing(point, point2),
-					coord = team.coord = turf.getCoord(point),
-					distance = turf.distance(cameraCoord, coord);
+					coord = team.coord = turf.getCoord(point);
 
 				if (i === 1) {
 					const elevation = map.queryTerrainElevation(coord);
@@ -4599,8 +4606,9 @@ map.on('load', function () {
 					modelScale = modelOrigin.meterInMercatorCoordinateUnits();
 				}
 
-				team.marker.setLngLat(coord)
-					.setOffset([0, -Math.pow(2, clamp(map.getZoom(), 20, 24) - 20) * 64 * Math.sin(THREE.MathUtils.degToRad(map.getPitch())) * ((baseDistance + .01) / (distance + .01)) - 35]);
+				const p1 = map.project(coord);
+					p2 = transform._coordinatePoint(transform.locationCoordinate(mapboxgl.LngLat.convert(coord), Math.pow(2, 20 - clamp(map.getZoom(), 0, 20)) * 4), true);
+				team.marker.setLngLat(coord).setOffset([p2.x - p1.x, p2.y - p1.y - 35]);
 
 				if (team.object) {
 					const elevation = map.queryTerrainElevation(coord),
