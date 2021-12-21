@@ -5,23 +5,23 @@ html, body, #map {
 body {
 	margin: 0;
 	position: absolute;
-    color: #333;
+	color: #333;
 }
 i.fas {
-    width: 21px;
-    font-size: 21px;
-    line-height: 39px;
-    margin-right: 6px;
-    vertical-align: top;
+	width: 21px;
+	font-size: 21px;
+	line-height: 39px;
+	margin-right: 6px;
+	vertical-align: top;
 }
 i.fa-user {
-    font-size: 23px;
+	font-size: 23px;
 }
 i.fa-road {
-    font-size: 19px;
+	font-size: 19px;
 }
 i.fa-users, i.fa-helicopter {
-    font-size: 17px;
+	font-size: 17px;
 }
 .mapboxgl-ctrl-group {
 	border-radius: 10px;
@@ -83,6 +83,75 @@ i.fa-users, i.fa-helicopter {
 	border-radius: 50%;
 	cursor: pointer;
 }
+.map-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	padding: 10px;
+	white-space: nowrap;
+	z-index: 1;
+}
+.map-overlay-inner {
+	background-color: rgba(0, 0, 0, 0.7);
+	color: #fff;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	border-radius: 3px;
+	padding: 10px;
+}
+.title {
+	font-size: 18px;
+	font-weight: bold;
+	line-height: 30px;
+}
+.tracking-position {
+	font-size: 14px;
+	font-weight: bold;
+	line-height: 30px;
+}
+.tracking-gauge {
+	width: 170px;
+	height: 6px;
+	background-color: #999;
+}
+.tracking-progress {
+	position: relative;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 0;
+	background-color: red;
+}
+.tracking-status {
+	color: #f90;
+	display: none;
+}
+.tracking-target {
+	display: none;
+	margin-top: 10px;
+}
+.tracking-marker {
+	display: table-cell;
+	background-size: cover;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	margin-right: 6px;
+}
+.tracking-runner {
+	display: table-cell;
+	background-size: cover;
+	height: 44px;
+	font-size: 14px;
+	line-height: 22px;
+	padding-left: 6px;
+}
+.tag {
+	padding: 0 4px;
+	border-radius: 4px;
+	color: #fff;
+	background-color: green;
+	display: inline-block;
+}
 .bg {
 	position: absolute;
 	top: 0;
@@ -115,11 +184,11 @@ i.fa-users, i.fa-helicopter {
 }
 .menu div:first-child {
 	border-radius: 10px 10px 0 0;
-    background-color: #000;
-    color: #fff;
-    text-align: center;
-    font-weight: bold;
-    pointer-events: none;
+	background-color: #000;
+	color: #fff;
+	text-align: center;
+	font-weight: bold;
+	pointer-events: none;
 }
 .menu div:last-child {
 	border-radius: 0 0 10px 10px;
@@ -135,11 +204,40 @@ i.fa-users, i.fa-helicopter {
 }
 .info {
 	position: absolute;
-	top: 150px;
+	top: 165px;
 	right: 60px;
 	width: 250px;
-	padding: 10px;
 	background-color: #fff;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 	border-radius: 10px;
+}
+.info div:first-child {
+	height: 39px;
+	border-radius: 10px 10px 0 0;
+	background-color: #000;
+	color: #fff;
+	text-align: center;
+	font-size: 14px;
+	font-weight: bold;
+	line-height: 39px;
+	pointer-events: none;
+}
+.info div:last-child {
+	padding: 0 10px;
+	border-radius: 0 0 10px 10px;
+}
+.panel {
+	position: absolute;
+	bottom: min(-25%, -150px);
+	width: 100%;
+	height: max(25%, 150px);
+	background-color: rgba(0, 0, 0, 0.7);;
+	display: block;
+	transition: bottom 1s;
+	z-index: 3;
+}
+.chart {
+	position: absolute;
+	width: 100%;
+	height: 100%;
 }

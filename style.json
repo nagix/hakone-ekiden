@@ -19,7 +19,7 @@
             "url": "mapbox://mapbox.mapbox-streets-v8",
             "type": "vector"
         },
-        "gsi-dem": {
+        "10b512-7-113-50": {
             "type": "raster-dem",
             "tiles": [
                 "https://optgeo.github.io/10b512-7-113-50/zxy/{z}/{x}/{y}.webp"
@@ -27,6 +27,15 @@
             "tileSize": 512,
             "maxzoom": 13,
             "minzoom": 3,
+            "attribution": "地理院タイル"
+        },
+        "et10b": {
+            "type":"raster-dem",
+            "tiles": [
+                "https://x.optgeo.org/et10b/et512/{z}/{x}/{y}.webp"
+            ],
+            "tileSize": 512,
+            "maxzoom": 13,
             "attribution": "地理院タイル"
         }
     },
@@ -2481,7 +2490,7 @@
         }
     ],
     "terrain": {
-        "source": "gsi-dem",
+        "source": "et10b",
         "exaggeration": 1.5
     }
 }

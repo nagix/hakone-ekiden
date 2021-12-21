@@ -30,9 +30,38 @@
 	<script src="https://cdn.jsdelivr.net/npm/three@0.135.0/build/three.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/three@0.135.0/examples/js/loaders/GLTFLoader.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/three@0.135.0/examples/js/utils/SkeletonUtils.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@3.6.2/dist/chart.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.2.1/dist/chartjs-plugin-annotation.min.js"></script>
 </head>
 <body>
 	<div id="map">
+		<div class="map-overlay">
+			<div class="map-overlay-inner">
+				<div class="title">
+					<span>箱根駅伝 3D</span> <span class="tag">TEST</span>
+				</div>
+				<div class="tracking-position">
+					<span id="trip">往路</span><span id="section">1</span>区
+					<span id="distance">0.00</span> km
+					<span id="tracking-status" class="tracking-status">追跡中</span>
+				</div>
+				<div class="tracking-gauge">
+					<div id="progress" class="tracking-progress"></div>
+				</div>
+				<div id="tracking-target" class="tracking-target">
+					<div id="tracking-marker" class="tracking-marker"></div>
+					<div class="tracking-runner">
+						<span id="tracking-team">駒澤大学</span><br>
+						<span id="tracking-runner">山田 たろう (3年)</span>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="panel" class="panel">
+			<div class="chart">
+				<canvas id="chart"></canvas>
+			</div>
+		</div>
 		<div id="views-bg" class="bg">
 			<div id="views" class="menu">
 				<div>カメラ切り替え</div>
@@ -47,9 +76,11 @@
 		</div>
 		<div id="info-bg" class="bg">
 			<div class="info">
-				<h3>箱根駅伝 3D について</h3>
-				<p>このデータビジュアライゼーションは <a href="https://nagix.github.io" target="_blank">草薙 昭彦</a> により作成されました。</p>
-				<p>ソースコードは <a href="https://github.com/nagix/hakone-ekiden" target="_blank">GitHub リポジトリ</a> にて公開されています。</p>
+				<div>箱根駅伝 3D について</div>
+				<div>
+					<p>このデータビジュアライゼーションは <a href="https://nagix.github.io" target="_blank">草薙 昭彦</a> により作成されました。</p>
+					<p>ソースコードは <a href="https://github.com/nagix/hakone-ekiden" target="_blank">GitHub リポジトリ</a> にて公開されています。</p>
+				</div>
 			</div>
 		</div>
 	</div>
