@@ -4144,9 +4144,9 @@ let modelOrigin = mapboxgl.MercatorCoordinate.fromLngLat(routes[trip][0]);
 let modelScale = modelOrigin.meterInMercatorCoordinateUnits();
 
 let trackingTeam, trackingBaseBearing;
-let trackingMode = 'helicopter';
+let trackingMode = 'front';
 let autoTrackingMode = true;
-let lastViewSwitch = 0;
+let lastViewSwitch = Date.now();
 let trackingAnimationID;
 let chart;
 let chartSection;
@@ -4250,13 +4250,14 @@ function startTrackingAnimation() {
 }
 
 function getSection(distance) {
-	for (let i = 1; i < sections[trip].length; i++) {
+	for (let i = 1; i < sections[trip].length - 1; i++) {
 		const section = sections[trip][i];
 
 		if (distance < distances[trip][section.index][0]) {
 			return i - 1;
 		}
 	}
+	return sections[trip].length - 2;
 }
 
 Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.2)';
@@ -4267,8 +4268,10 @@ var map = new mapboxgl.Map({
 	container: 'map',
 	style: 'style.json',
 	center: routes[trip][0],
-	zoom: 17,
-	pitch: 60
+	zoom: 21,
+	bearing: 95,
+	pitch: 80,
+	customAttribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>'
 });
 
 map.on('load', function () {
@@ -4395,9 +4398,9 @@ map.on('load', function () {
 					});
 
 					team.object = new THREE.Object3D();
-					team.object.scale.x = modelScale * 80;
-					team.object.scale.y = modelScale * 80;
-					team.object.scale.z = modelScale * 80;
+					team.object.scale.x = modelScale * 5;
+					team.object.scale.y = modelScale * 5;
+					team.object.scale.z = modelScale * 5;
 					team.object.add(object);
 
 					scene.add(team.object);
@@ -4490,6 +4493,8 @@ map.on('load', function () {
 			.setLngLat([0, 0])
 			.setPopup(popup)
 			.addTo(map);
+
+		team.offset = Math.random() * 6 - 3;
 	}
 
 	map.on('click', event => {
@@ -4598,8 +4603,9 @@ map.on('load', function () {
 				.then(response => response.json())
 				.then(result => {
 					// TEST
-					const s = 33;
-					const f = 300;
+					const s = Date.now() / 1000 + 10;
+					const d = 0;
+					const f = 0;
 					result = {
 						"status": {
 							"msg": "",
@@ -4615,28 +4621,28 @@ map.on('load', function () {
 							"runner": "20211204.1"
 						},
 						"points":[
-							[9, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[0, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[8, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[10, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[4, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[2, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[5, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[11, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[14, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[3, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[7, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[1, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - f - 1],
-							[19, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[6, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[13, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[16, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[18, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[15, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[17, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[12, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[21, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1],
-							[20, 35.68676, 139.76462, 1, 0, s, 20, 1003, 5, Date.now() / 1000 - Math.random() * f - 1]
+							[9, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[0, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[8, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[10, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[4, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[2, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[5, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[11, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[14, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[3, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[7, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[1, 35.68676, 139.76462, 1, 0, d, 20, 1003, 5, s],
+							[19, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[6, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[13, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[16, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[18, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[15, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[17, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[12, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[21, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[20, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s]
 						]
 					};
 
@@ -4669,11 +4675,20 @@ map.on('load', function () {
 						});
 					}
 					if (!lastDataLoadComplete) {
-						const point = turf.along(routeFeature, teams[1].distance + teams[1].speed * (now - teams[1].ts * 1000) / 3600000);
+						const distance = clamp(teams[1].distance + teams[1].speed * (now - teams[1].ts * 1000) / 3600000, 0, distances[trip][distances[trip].length - 1][0]),
+							point = turf.along(routeFeature, distance);
 
-						map.flyTo({
-							center: turf.getCoord(point)
-						});
+						if (now / 1000 > s + 1) {
+							map.flyTo({
+								center: turf.getCoord(point),
+								zoom: 17,
+								bearing : 0,
+								pitch: 60
+							});
+						} else {
+							trackingTeam = 1;
+							document.getElementById('panel').style.bottom = 0;
+						}
 					}
 					lastDataLoadComplete = now;
 				});
@@ -4686,11 +4701,12 @@ map.on('load', function () {
 //				const point = turf.along(routeFeature, now < lastDataLoadComplete + 1000 ?
 //					team.adjustedDistance + team.adjustedSpeed * (now - team.ts * 1000) / 3600000 :
 //					team.distance + team.speed * (now - team.ts * 1000) / 3600000);
-				const distance = team.distance + team.speed * (now - team.ts * 1000) / 3600000,
+				const distance = clamp(team.distance + team.speed * (now - team.ts * 1000) / 3600000, 0, distances[trip][distances[trip].length - 1][0]),
 					point = turf.along(routeFeature, distance),
 					point2 = turf.along(routeFeature, distance + 0.001),
 					bearing = team.bearing = turf.bearing(point, point2),
-					coord = team.coord = turf.getCoord(point);
+					point3 = turf.destination(point, team.offset / 1000, bearing + 90),
+					coord = team.coord = turf.getCoord(point3);
 
 				if (i === 1) {
 					const elevation = map.queryTerrainElevation(coord);
