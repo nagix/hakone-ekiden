@@ -4263,10 +4263,14 @@ function getSection(distance) {
 Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.2)';
 Chart.defaults.color = '#fff';
 
+const osm = location.search.match(/osm/);
+const styleFile = osm ? 'style-osm.json' : 'style.json';
+const buildingLayerId = osm ? 'buildings4302' : 'building-3d';
+
 mapboxgl.accessToken = 'pk.eyJ1IjoibmFnaXgiLCJhIjoiY2tqZXZ1MjQ0MGE3MDJ6bzc2cmNyaWlrOSJ9.QjrikO3RTE20AMURILSTWg';
-var map = new mapboxgl.Map({
+const map = new mapboxgl.Map({
 	container: 'map',
-	style: 'style.json',
+	style: styleFile,
 	center: routes[trip][0],
 	zoom: 21,
 	bearing: 95,
@@ -4444,7 +4448,7 @@ map.on('load', function () {
 			me.renderer.render(me.scene, me.camera);
 			me.map.triggerRepaint();
 		}
-	}, 'building-3d');
+	}, buildingLayerId);
 
 	sections[trip].forEach(({name, index}) => {
 		new AnimatedPopup({closeButton: false, closeOnClick: false})
