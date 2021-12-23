@@ -4137,6 +4137,12 @@ const trackingModes = [
 
 const SQRT3 = Math.sqrt(3);
 
+// TEST
+//const s = Date.now() / 1000 + 10 - 4.5*60*60;
+const s = 1640300400;
+const d = 0;
+const f = 0;
+
 const trip = 0;
 const routeFeature = turf.lineString(routes[trip]);
 
@@ -4607,9 +4613,6 @@ map.on('load', function () {
 				.then(response => response.json())
 				.then(result => {
 					// TEST
-					const s = Date.now() / 1000 + 10;
-					const d = 0;
-					const f = 0;
 					result = {
 						"status": {
 							"msg": "",
@@ -4779,7 +4782,11 @@ map.on('load', function () {
 		}
 
 		if (trackingTeam && autoTrackingMode && now >= lastViewSwitch + 30000) {
-			trackingMode = trackingModes[Math.floor(Math.random() * (trackingModes.length - 2)) + 2];
+			if (now / 1000 > s - 33 && now / 1000 <= s) {
+				trackingMode = 'front';
+			} else {
+				trackingMode = trackingModes[Math.floor(Math.random() * (trackingModes.length - 2)) + 2];
+			}
 			startTrackingAnimation();
 			lastViewSwitch = now;
 		}

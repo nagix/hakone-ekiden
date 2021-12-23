@@ -27,7 +27,7 @@
             "tileSize": 512,
             "maxzoom": 13,
             "minzoom": 3,
-            "attribution": "地理院タイル"
+            "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"
         },
         "et10b": {
             "type":"raster-dem",
@@ -36,7 +36,7 @@
             ],
             "tileSize": 512,
             "maxzoom": 13,
-            "attribution": "地理院タイル"
+            "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"
         }
     },
     "sprite": "mapbox://sprites/mapbox-map-design/ckhqrf2tz0dt119ny6azh975y/4snix0v8fnkivnb584t41dzcl",
