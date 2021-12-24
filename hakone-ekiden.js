@@ -4040,7 +4040,15 @@ const distances = [[
 	[109.6, 3.4]
 ]];
 
-const tripName = ['往路', '復路'];
+const trips = [{
+	name: '往路',
+	center: routes[0][0],
+	bearing: 95
+}, {
+	name: '復路',
+	center: routes[1][0],
+	bearing: -50
+}];
 
 const sections = [[
 	{name: 'スタート 読売新聞社前', index: 0},
@@ -4132,18 +4140,19 @@ const trackingModes = [
 	'front-above',
 	'back',
 	'back-above',
+	'drone',
 	'helicopter'
 ];
 
 const SQRT3 = Math.sqrt(3);
 
 // TEST
-//const s = Date.now() / 1000 + 10 - 4.5*60*60;
-const s = 1640300400;
+//const s = Date.now() / 1000 + 10;
+const s = 1640386800;
 const d = 0;
-const f = 0;
+const f = 900;
 
-const trip = 0;
+const trip = 1;
 const routeFeature = turf.lineString(routes[trip]);
 
 let modelOrigin = mapboxgl.MercatorCoordinate.fromLngLat(routes[trip][0]);
@@ -4177,6 +4186,10 @@ function jumpTo(options) {
 		zoom = currentZoom;
 		bearing = currentBearing;
 		pitch = currentPitch;
+	} else if (trackingMode === 'drone') {
+		zoom = 19;
+		bearing = (trackingBaseBearing - performance.now() / 200) % 360;
+		pitch = 80;
 	} else if (trackingMode === 'helicopter') {
 		zoom = 17;
 		bearing = (trackingBaseBearing + performance.now() / 400) % 360;
@@ -4277,11 +4290,10 @@ mapboxgl.accessToken = 'pk.eyJ1IjoibmFnaXgiLCJhIjoiY2tqZXZ1MjQ0MGE3MDJ6bzc2cmNya
 const map = new mapboxgl.Map({
 	container: 'map',
 	style: styleFile,
-	center: routes[trip][0],
+	center: trips[trip].center,
 	zoom: 21,
-	bearing: 95,
-	pitch: 80,
-	customAttribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>'
+	bearing: trips[trip].bearing,
+	pitch: 80
 });
 
 map.on('load', function () {
@@ -4628,28 +4640,28 @@ map.on('load', function () {
 							"runner": "20211204.1"
 						},
 						"points":[
-							[9, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[0, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[8, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[10, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[4, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[2, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[5, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[11, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[14, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[3, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[7, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[1, 35.68676, 139.76462, 1, 0, d, 20, 1003, 5, s],
-							[19, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[6, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[13, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[16, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[18, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[15, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[17, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[12, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[21, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[20, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s]
+							[9, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[0, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[8, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[10, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[4, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[2, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[5, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[11, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[14, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[3, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[7, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[1, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+							[19, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[6, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[13, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[16, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[18, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[15, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[17, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[12, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[21, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+							[20, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)]
 						]
 					};
 
@@ -4747,7 +4759,7 @@ map.on('load', function () {
 						baseDistance = distances[trip][sections[trip][section].index][0],
 						nextDistance = distances[trip][sections[trip][section + 1].index][0];
 
-					document.getElementById('trip').innerText = tripName[trip];
+					document.getElementById('trip').innerText = trips[trip].name;
 					document.getElementById('section').innerText = trip * 5 + section + 1;
 					document.getElementById('distance').innerText = (distance - baseDistance).toFixed(2);
 					document.getElementById('progress').style.width = `${(distance - baseDistance) / (nextDistance - baseDistance) * 100}%`;
