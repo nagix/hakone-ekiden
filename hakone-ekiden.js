@@ -4141,24 +4141,31 @@ const trackingModes = [
 	'back',
 	'back-above',
 	'drone',
-	'helicopter'
+	'helicopter',
+	'bird'
 ];
+const trackingParams = {
+	zoom: {},
+	bearing: {},
+	pitch: {}
+};
 
 const SQRT3 = Math.sqrt(3);
 
 // TEST
-//const s = Date.now() / 1000 + 10;
-const s = 1640386800;
+const s = Date.now() / 1000 + 10;
+//const s = 1640386800;
 const d = 0;
-const f = 900;
+const f = 0;
+//const f = 900;
 
-const trip = 1;
+const trip = 0;
 const routeFeature = turf.lineString(routes[trip]);
 
 let modelOrigin = mapboxgl.MercatorCoordinate.fromLngLat(routes[trip][0]);
 let modelScale = modelOrigin.meterInMercatorCoordinateUnits();
 
-let trackingTeam, trackingBaseBearing;
+let trackingTeam;
 let trackingMode = 'front';
 let autoTrackingMode = true;
 let lastViewSwitch = Date.now();
@@ -4174,8 +4181,129 @@ function easeOutQuart(t) {
 	return -((t = t - 1) * t * t * t - 1);
 }
 
+function createInterpolant(xs, ys) {
+	const length = xs.length;
+
+	// Get consecutive differences and slopes
+	const dys = [], dxs = [], ms = [];
+	for (let i = 0; i < length - 1; i++) {
+		const dx = xs[i + 1] - xs[i], dy = ys[i + 1] - ys[i];
+		dxs.push(dx); dys.push(dy); ms.push(dy / dx);
+	}
+
+	// Get degree-1 coefficients
+	const c1s = [ms[0]];
+	for (let i = 0; i < dxs.length - 1; i++) {
+		const m = ms[i], mNext = ms[i + 1];
+		if (m * mNext <= 0) {
+			c1s.push(0);
+		} else {
+			const dx_ = dxs[i], dxNext = dxs[i + 1], common = dx_ + dxNext;
+			c1s.push(3 * common / ((common + dxNext)/m + (common + dx_) / mNext));
+		}
+	}
+	c1s.push(ms[ms.length - 1]);
+
+	// Get degree-2 and degree-3 coefficients
+	var c2s = [], c3s = [];
+	for (let i = 0; i < c1s.length - 1; i++) {
+		const c1 = c1s[i], m_ = ms[i], invDx = 1/dxs[i], common_ = c1 + c1s[i + 1] - m_ - m_;
+		c2s.push((m_ - c1 - common_) * invDx); c3s.push(common_ * invDx * invDx);
+	}
+
+	// Return interpolant function
+	return x => {
+		// The rightmost point in the dataset should give an exact result
+		let i = xs.length - 1;
+		if (x == xs[i]) {
+			return ys[i];
+		}
+
+		// Search for the interval x is in, returning the corresponding y if x is one of the original xs
+		let low = 0, mid, high = c3s.length - 1;
+		while (low <= high) {
+			mid = Math.floor(0.5 * (low + high));
+			var xHere = xs[mid];
+			if (xHere < x) {
+				low = mid + 1;
+			}
+			else if (xHere > x) {
+				high = mid - 1;
+			}
+			else {
+				return ys[mid];
+			}
+		}
+		i = Math.max(0, high);
+
+		// Interpolate
+		const diff = x - xs[i], diffSq = diff * diff;
+		return ys[i] + c1s[i] * diff + c2s[i] * diffSq + c3s[i] * diff * diffSq;
+	};
+};
+
+function updateTrackingParams() {
+	const now = performance.now();
+
+	if (trackingMode === 'bird') {
+		const {zoom, bearing, pitch} = trackingParams;
+
+		if (!zoom.time) {
+			const time = zoom.time = [0, now, 0, 0],
+				value = zoom.value = [0, map.getZoom(), 0, 0];
+			for (const [i, j] of [[0, 1], [2, 1], [3, 2]]) {
+				time[i] = time[j] + Math.sign(i - j) * (Math.random() * 10000 + 30000);
+				value[i] = Math.random() * 6 + 16;
+			}
+			zoom.fn = createInterpolant(time, value);
+		} else if (now >= zoom.time[2]) {
+			zoom.time = zoom.time.slice(1).concat(zoom.time[3] + Math.random() * 10000 + 30000);
+			zoom.value = zoom.value.slice(1).concat(Math.random() * 6 + 16);
+			zoom.fn = createInterpolant(zoom.time, zoom.value);
+		}
+		if (!bearing.time) {
+			const time = bearing.time = [0, now, 0, 0],
+				value = bearing.value = [0, map.getBearing(), 0, 0];
+			for (const [i, j] of [[0, 1], [2, 1], [3, 2]]) {
+				time[i] = time[j] + Math.sign(i - j) * (Math.random() * 10000 + 40000);
+				value[i] = Math.random() * 360 - 180;
+			}
+			bearing.fn = createInterpolant(time, value);
+		} else if (now >= bearing.time[2]) {
+			bearing.time = bearing.time.slice(1).concat(bearing.time[3] + Math.random() * 10000 + 40000);
+			bearing.value = bearing.value.slice(1).concat(Math.random() * 360 - 180);
+			bearing.fn = createInterpolant(bearing.time, bearing.value);
+		}
+		if (!pitch.time) {
+			const time = pitch.time = [0, now, 0, 0],
+				value = pitch.value = [0, map.getPitch(), 0, 0];
+			for (const [i, j] of [[0, 1], [2, 1], [3, 2]]) {
+				time[i] = time[j] + Math.sign(i - j) * (Math.random() * 10000 + 20000);
+				value[i] = Math.random() * 30 + 45;
+			}
+			pitch.fn = createInterpolant(time, value);
+		} else if (now >= pitch.time[2]) {
+			pitch.time = pitch.time.slice(1).concat(pitch.time[3] + Math.random() * 10000 + 20000);
+			pitch.value = pitch.value.slice(1).concat(Math.random() * 30 + 45);
+			pitch.fn = createInterpolant(pitch.time, pitch.value);
+		}
+	} else {
+		delete trackingParams.zoom.time;
+		delete trackingParams.bearing.time;
+		delete trackingParams.pitch.time;
+		if (trackingMode === 'drone') {
+			const bearing = map.getBearing();
+			trackingParams.bearing.fn = t => (bearing - (t - now) / 200) % 360;
+		} else if (trackingMode === 'helicopter') {
+			const bearing = map.getBearing();
+			trackingParams.bearing.fn = t => (bearing + (t - now) / 400) % 360;
+		}
+	}
+}
+
 function jumpTo(options) {
-	const currentZoom = map.getZoom(),
+	const now = performance.now(),
+		currentZoom = map.getZoom(),
 		currentBearing = map.getBearing(),
 		currentPitch = map.getPitch(),
 		scrollZooming = map.scrollZoom._active;
@@ -4188,12 +4316,17 @@ function jumpTo(options) {
 		pitch = currentPitch;
 	} else if (trackingMode === 'drone') {
 		zoom = 19;
-		bearing = (trackingBaseBearing - performance.now() / 200) % 360;
+		bearing = trackingParams.bearing.fn(now);
 		pitch = 80;
 	} else if (trackingMode === 'helicopter') {
 		zoom = 17;
-		bearing = (trackingBaseBearing + performance.now() / 400) % 360;
+		bearing = trackingParams.bearing.fn(now);
 		pitch = 60;
+	} else if (trackingMode === 'bird') {
+		updateTrackingParams();
+		zoom = trackingParams.zoom.fn(now);
+		bearing = trackingParams.bearing.fn(now);
+		pitch = trackingParams.pitch.fn(now);
 	} else {
 		if (trackingMode === 'front' || trackingMode === 'front-above') {
 			bearing = (bearing + 360) % 360 - 180;
@@ -4241,8 +4374,6 @@ function startTrackingAnimation() {
 	const start = performance.now();
 	let t2 = 0;
 
-	trackingBaseBearing = map.getBearing() - start / 400;
-
 	function animate() {
 		const elapsed = Math.min(performance.now() - start, 3000),
 			t1 = easeOutQuart(elapsed / 3000),
@@ -4265,6 +4396,7 @@ function startTrackingAnimation() {
 	}
 
 	stopTrackingAnimation();
+	updateTrackingParams();
 	animate();
 }
 
@@ -4410,12 +4542,13 @@ map.on('load', function () {
 					const texture = new THREE.TextureLoader().load(`texture/${i}.png`);
 					texture.encoding = THREE.sRGBEncoding;
 					texture.flipY = false;
+					const material = new THREE.MeshPhongMaterial({
+						map: texture,
+						transparent: true
+					});
 					object.traverse(child => {
 						if (child.isMesh) {
-							child.material = new THREE.MeshPhongMaterial({
-								map: texture,
-								transparent: true
-							});
+							child.material = material;
 						}
 					});
 
