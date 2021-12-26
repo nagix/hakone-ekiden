@@ -4524,8 +4524,9 @@ map.on('load', function () {
 			// This is needed to avoid a black screen with empty scene
 			// scene.add(new Mesh());
 
-			const loader = new THREE.GLTFLoader();
-			loader.load('runner.glb', gltf => {
+			const gltfLoader = new THREE.GLTFLoader();
+			const textureLoader = new THREE.TextureLoader();
+			gltfLoader.load('runner.glb', gltf => {
 				const mesh = gltf.scene;
 
 				mesh.position.x = 0;
@@ -4539,7 +4540,7 @@ map.on('load', function () {
 					const team = teams[i],
 						object = THREE.SkeletonUtils.clone(mesh);
 
-					const texture = new THREE.TextureLoader().load(`texture/${i}.png`);
+					const texture = textureLoader.load(`texture/${i}.png`);
 					texture.encoding = THREE.sRGBEncoding;
 					texture.flipY = false;
 					const material = new THREE.MeshPhongMaterial({
