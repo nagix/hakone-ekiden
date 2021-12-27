@@ -4158,6 +4158,45 @@ const s = Date.now() / 1000 + 10;
 const d = 0;
 const f = 0;
 //const f = 900;
+const testData = {
+	"status": {
+		"msg": "",
+		"marker": 1,
+		"sg": 1,
+		"course": 2,
+		"reload": "",
+		"reloadurl": "",
+		"leading": 0,
+		"interval": 10,
+		"camera": [0,1,2,3,4],
+		"now": "2021\/12\/16 19:18:52",
+		"runner": "20211204.1"
+	},
+	"points":[
+		[1, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
+		[9, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[0, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[8, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[10, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[4, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[2, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[5, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[11, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[14, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[3, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[7, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[19, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[6, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[13, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[16, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[18, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[15, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[17, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[12, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[21, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
+		[20, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)]
+	]
+};
 
 const trip = 0;
 const routeFeature = turf.lineString(routes[trip]);
@@ -4794,67 +4833,34 @@ map.on('load', function () {
 		const now = Date.now(),
 			transform = map.transform;
 
-		if (now >= lastDataLoad + 10000 + 100000000) {
+		if (now >= lastDataLoad + 10000) {
 			fetch('https://mini-tokyo.appspot.com/hakone')
 				.then(response => response.json())
 				.then(result => {
 					// TEST
-					result = {
-						"status": {
-							"msg": "",
-							"marker": 1,
-							"sg": 1,
-							"course": 2,
-							"reload": "",
-							"reloadurl": "",
-							"leading": 0,
-							"interval": 10,
-							"camera": [0,1,2,3,4],
-							"now": "2021\/12\/16 19:18:52",
-							"runner": "20211204.1"
-						},
-						"points":[
-							[9, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[0, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[8, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[10, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[4, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[2, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[5, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[11, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[14, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[3, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[7, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[1, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-							[19, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[6, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[13, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[16, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[18, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[15, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[17, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[12, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[21, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-							[20, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)]
-						]
-					};
+					result = testData;
 
 					for (const point of result.points) {
 						const now = Date.now();
 						const id = point[0];
 						const lat = point[1];
 						const lng = point[2];
-						const distance = point[5];
-						const speed = point[6];
+						let distance = point[5];
+						let speed = point[6];
 						const section = point[8];
-						const ts = point[9];
-//						const prevDistance = teams[id].distance;
-//						const prevSpeed = teams[id].speed;
-//						const prevTs = teams[id].ts;
+						let ts = point[9];
+						const prevDistance = teams[id].distance;
+						const prevSpeed = teams[id].speed;
+						const prevTs = teams[id].ts;
 
-//						const adjustedSpeed = prevDistance && prevSpeed && prevTs ?
-//							(distance + speed * (now - ts * 1000) / 3600000 - (prevDistance + prevSpeed * (now - prevTs * 1000) / 3600000)) * 3600 : 0;
-//						const adjustedDistance = distance + speed * (now + 1000 - ts * 1000) / 3600000 - adjustedSpeed * 1000 / 3600000;
+						if (!isNaN(prevDistance) && !isNaN(prevSpeed) && !isNaN(prevTs)) {
+							const adjustedDistance = prevDistance + prevSpeed * (now - prevTs * 1000) / 3600000;
+							const adjustedSpeed = (distance + speed * (now + 10000 - ts * 1000) / 3600000 - adjustedDistance) * 360;
+
+							distance = adjustedDistance;
+							speed = adjustedSpeed;
+							ts = now / 1000;
+						}
 
 						Object.assign(teams[id], {
 							lat,
@@ -4862,9 +4868,7 @@ map.on('load', function () {
 							distance,
 							speed,
 							section,
-							ts,
-//							adjustedDistance,
-//							adjustedSpeed
+							ts
 						});
 					}
 					if (!lastDataLoadComplete) {
@@ -4891,9 +4895,6 @@ map.on('load', function () {
 		for (let i = 1; i < teams.length; i++) {
 			const team = teams[i];
 			if (!isNaN(team.distance) && !isNaN(team.speed) && !isNaN(team.ts)) {
-//				const point = turf.along(routeFeature, now < lastDataLoadComplete + 1000 ?
-//					team.adjustedDistance + team.adjustedSpeed * (now - team.ts * 1000) / 3600000 :
-//					team.distance + team.speed * (now - team.ts * 1000) / 3600000);
 				const distance = clamp(team.distance + team.speed * (now - team.ts * 1000) / 3600000, 0, distances[trip][distances[trip].length - 1][0]),
 					point = turf.along(routeFeature, distance),
 					point2 = turf.along(routeFeature, distance + 0.001),
