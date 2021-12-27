@@ -4559,16 +4559,31 @@ map.on('load', function () {
 					team.object.scale.z = modelScale * 5;
 					team.object.add(object);
 
+					team.object2 = THREE.SkeletonUtils.clone(team.object);
+
 					scene.add(team.object);
 
-					team.mixer = new THREE.AnimationMixer(team.object);
-					team.mixer.clipAction(gltf.animations[2]).play();
+					team.object.userData.mixer = new THREE.AnimationMixer(team.object);
+					team.object.userData.mixer.clipAction(gltf.animations[2]).play();
+
+					scene.add(team.object2);
+
+					team.object2.userData.mixer = new THREE.AnimationMixer(team.object2);
+					team.object2.userData.actions = gltf.animations.slice(2, 4).map(
+						clip => team.object2.userData.mixer.clipAction(clip).play()
+					);
+					team.object2.userData.duration = 20 / 24;
 				}
 
 
 				function animate() {
 					for (let i = 1; i < teams.length; i++) {
-						teams[i].mixer.setTime((performance.now() / 750 + i / teams.length) % (20 / 24));
+						const {object, object2} = teams[i],
+							duration = 20 / 24,
+							duration2 = object2.userData.duration;
+
+						object.userData.mixer.setTime((performance.now() / 750 + i / teams.length * duration) % duration);
+						object2.userData.mixer.setTime((performance.now() / 750 + i / teams.length * duration2) % duration2);
 					}
 					requestAnimationFrame(animate);
 				}
@@ -4602,12 +4617,30 @@ map.on('load', function () {
 		}
 	}, buildingLayerId);
 
-	sections[trip].forEach(({name, index}) => {
-		new AnimatedPopup({closeButton: false, closeOnClick: false})
-			.setLngLat(turf.getCoord(turf.along(routeFeature, distances[trip][index][0])))
-			.setText(name)
-			.addTo(map);
-	});
+	for (const {name, index} of sections[trip]) {
+		const distance = distances[trip][index][0],
+			point1 = turf.along(routeFeature, distance),
+			point2 = turf.along(routeFeature, distance + 0.001),
+			bearing = turf.bearing(point2, point1) + 10,
+			coord = turf.getCoord(point1);
+			popup = new AnimatedPopup({closeButton: false, closeOnClick: false, offset: [0, -60]})
+				.setLngLat(coord)
+				.setText(name)
+				.addTo(map),
+			element = popup.getElement();
+
+		element.addEventListener('click', event => {
+			trackingTeam = undefined;
+			stopTrackingAnimation();
+			document.getElementById('panel').style.bottom = 'min(-25%, -150px)';
+			map.flyTo({
+				center: turf.getCoord(coord),
+				zoom: 21,
+				bearing,
+				pitch: 80
+			});
+		});
+	}
 
 	for (let i = teams.length - 1; i > 0; i--) {
 		const team = teams[i];
@@ -4655,15 +4688,22 @@ map.on('load', function () {
 
 	map.on('click', event => {
 		trackingTeam = undefined;
+		stopTrackingAnimation();
 		document.getElementById('panel').style.bottom = 'min(-25%, -150px)';
 	});
 
 	function updateScales() {
 		for (let i = 1; i < teams.length; i++) {
-			const {object} = teams[i];
+			const {object, object2} = teams[i];
 
 			if (object) {
 				const {scale} = object;
+
+				scale.x = scale.y = scale.z =
+					modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
+			}
+			if (object2) {
+				const {scale} = object2;
 
 				scale.x = scale.y = scale.z =
 					modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
@@ -4879,6 +4919,51 @@ map.on('load', function () {
 					team.object.position.y = -(mCoord.y - modelOrigin.y);
 					team.object.position.z = mCoord.z - modelOrigin.z;
 					team.object.rotation.z = THREE.MathUtils.degToRad(-bearing);
+
+				}
+				if (team.object2) {
+					const section = getSection(distance),
+						baseDistance = distances[trip][sections[trip][section].index][0],
+						nextDistance = distances[trip][sections[trip][section + 1].index][0];
+
+					if (section < 5 && nextDistance - distance <= 0.1) {
+						const point4 = turf.along(routeFeature, nextDistance),
+							point5 = turf.along(routeFeature, nextDistance - 0.001),
+							bearing2 = turf.bearing(point4, point5),
+							point6 = turf.destination(point4, team.offset / 1000, bearing2 - 90),
+							coord2 = turf.getCoord(point6),
+							elevation = map.queryTerrainElevation(coord2),
+							mCoord = mapboxgl.MercatorCoordinate.fromLngLat(coord2, elevation);
+
+						team.object2.position.x = mCoord.x - modelOrigin.x;
+						team.object2.position.y = -(mCoord.y - modelOrigin.y);
+						team.object2.position.z = mCoord.z - modelOrigin.z;
+						team.object2.rotation.z = THREE.MathUtils.degToRad(-bearing2);
+						team.object2.userData.actions[0].weight = 0;
+						team.object2.userData.actions[1].weight = 1;
+						team.object2.userData.duration = 40 / 24;
+						team.object2.visible = true;
+					} else if (section > 0 && distance - baseDistance <= 0.02) {
+						const point4 = turf.along(routeFeature, baseDistance),
+							point5 = turf.along(routeFeature, baseDistance + 0.001),
+							bearing2 = turf.bearing(point4, point5),
+							point6 = turf.destination(point4, team.offset / 1000, bearing2 + 90),
+							point7 = turf.destination(point6, distance - baseDistance, bearing2 - 45),
+							coord2 = turf.getCoord(point7),
+							elevation = map.queryTerrainElevation(coord2),
+							mCoord = mapboxgl.MercatorCoordinate.fromLngLat(coord2, elevation);
+
+						team.object2.position.x = mCoord.x - modelOrigin.x;
+						team.object2.position.y = -(mCoord.y - modelOrigin.y);
+						team.object2.position.z = mCoord.z - modelOrigin.z;
+						team.object2.rotation.z = THREE.MathUtils.degToRad(-(bearing2 - 45));
+						team.object2.userData.actions[0].weight = 1;
+						team.object2.userData.actions[1].weight = 0;
+						team.object2.userData.duration = 20 / 24;
+						team.object2.visible = true;
+					} else {
+						team.object2.visible = false;
+					}
 				}
 
 				if (!trackingAnimationID && trackingTeam === i && !map._zooming && !map._rotating && !map._pitching) {
