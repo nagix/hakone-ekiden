@@ -4055,19 +4055,19 @@ const trips = [{
 }];
 
 const sections = [[
-	{name: 'スタート 読売新聞社前', index: 0, distance: 0},
-	{name: '鶴見中継所', index: 84, distance: 21.359121097519537},
-	{name: '戸塚中継所', index: 226, distance: 44.43348892351547},
-	{name: '平塚中継所', index: 359, distance: 65.81535189365847},
-	{name: '小田原中継所', index: 510, distance: 86.73322688117908},
-	{name: 'ゴール 芦ノ湖', index: 1012, distance: 107.52088759314357}
+	{name: '<i class="far fa-flag"></i>スタート 読売新聞社前', index: 0, distance: 0},
+	{name: '<i class="fas fa-flag"></i>鶴見中継所', index: 84, distance: 21.359121097519537},
+	{name: '<i class="fas fa-flag"></i>戸塚中継所', index: 226, distance: 44.43348892351547},
+	{name: '<i class="fas fa-flag"></i>平塚中継所', index: 359, distance: 65.81535189365847},
+	{name: '<i class="fas fa-flag"></i>小田原中継所', index: 510, distance: 86.73322688117908},
+	{name: '<i class="fas fa-flag-checkered"></i>ゴール 芦ノ湖', index: 1012, distance: 107.52088759314357}
 ], [
-	{name: 'スタート 芦ノ湖', index: 0, distance: 0},
-	{name: '小田原中継所', index: 451, distance: 20.742588224877196},
-	{name: '平塚中継所', index: 604, distance: 42.01596900292473},
-	{name: '戸塚中継所', index: 761, distance: 63.43093853112574},
-	{name: '鶴見中継所', index: 916, distance: 86.57072442054573},
-	{name: 'ゴール 読売新聞社前', index: 1003, distance: 109.64762216304358}
+	{name: '<i class="far fa-flag"></i>スタート 芦ノ湖', index: 0, distance: 0},
+	{name: '<i class="fas fa-flag"></i>小田原中継所', index: 451, distance: 20.742588224877196},
+	{name: '<i class="fas fa-flag"></i>平塚中継所', index: 604, distance: 42.01596900292473},
+	{name: '<i class="fas fa-flag"></i>戸塚中継所', index: 761, distance: 63.43093853112574},
+	{name: '<i class="fas fa-flag"></i>鶴見中継所', index: 916, distance: 86.57072442054573},
+	{name: '<i class="fas fa-flag-checkered"></i>ゴール 読売新聞社前', index: 1003, distance: 109.64762216304358}
 ]];
 
 const teams = [{
@@ -4664,16 +4664,17 @@ map.on('load', function () {
 		}
 	}, buildingLayerId);
 
-	for (const {name, index, distance} of sections[trip]) {
-		const point1 = turf.along(routeFeature, distance),
+	for (const section of sections[trip]) {
+		const {name, index, distance} = section,
+			point1 = turf.along(routeFeature, distance),
 			point2 = turf.along(routeFeature, distance + 0.001),
 			bearing = turf.bearing(point2, point1) - 10,
 			coord = turf.getCoord(point1);
-			popup = new AnimatedPopup({closeButton: false, closeOnClick: false, offset: [0, -60]})
+			section.popup = new AnimatedPopup({closeButton: false, closeOnClick: false, anchor: 'bottom'})
 				.setLngLat(coord)
-				.setText(name)
+				.setHTML(name)
 				.addTo(map),
-			element = popup.getElement();
+			element = section.popup.getElement();
 
 		element.addEventListener('click', event => {
 			trackingTeam = undefined;
@@ -4746,13 +4747,13 @@ map.on('load', function () {
 				const {scale} = object;
 
 				scale.x = scale.y = scale.z =
-					modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
+					modelScale * 5 * Math.pow(2, 20 - Math.min(map.getZoom(), 20));
 			}
 			if (object2) {
 				const {scale} = object2;
 
 				scale.x = scale.y = scale.z =
-					modelScale * 5 * Math.pow(2, 20 - clamp(map.getZoom(), 0, 20));
+					modelScale * 5 * Math.pow(2, 20 - Math.min(map.getZoom(), 20));
 			}
 		}
 	}
@@ -4760,6 +4761,15 @@ map.on('load', function () {
 	map.on('zoom', updateScales)
 	map.on('move', updateScales)
 	map.on('resize', updateScales)
+
+	map.on('pitch', () => {
+		for (const {popup} of sections[trip]) {
+			if (popup) {
+				popup.setOffset([0, -75 * Math.sin(THREE.MathUtils.degToRad(map.getPitch())) * Math.pow(2, Math.max(map.getZoom(), 20) - 20)]);
+			}
+		}
+	})
+
 
 	// Workaround to update pitch using constraints
 	const {get: getPitch, set: setPitch} = Object.getOwnPropertyDescriptor(map.transform.constructor.prototype, 'pitch');
@@ -4916,7 +4926,7 @@ map.on('load', function () {
 				}
 
 				const p1 = map.project(coord);
-					p2 = transform._coordinatePoint(transform.locationCoordinate(mapboxgl.LngLat.convert(coord), Math.pow(2, 20 - clamp(map.getZoom(), 0, 20)) * 4), true);
+					p2 = transform._coordinatePoint(transform.locationCoordinate(mapboxgl.LngLat.convert(coord), Math.pow(2, 20 - Math.min(map.getZoom(), 20)) * 4), true);
 				team.marker.setLngLat(coord).setOffset([p2.x - p1.x, p2.y - p1.y - 35]);
 
 				if (team.object) {

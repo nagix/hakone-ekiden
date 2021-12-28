@@ -7,22 +7,6 @@ body {
 	position: absolute;
 	color: #333;
 }
-i.fas {
-	width: 21px;
-	font-size: 21px;
-	line-height: 39px;
-	margin-right: 6px;
-	vertical-align: top;
-}
-i.fa-user {
-	font-size: 23px;
-}
-i.fa-road {
-	font-size: 19px;
-}
-i.fa-users, i.fa-helicopter {
-	font-size: 17px;
-}
 .mapboxgl-ctrl-group {
 	border-radius: 10px;
 }
@@ -43,6 +27,13 @@ i.fa-users, i.fa-helicopter {
 	background: rgb(0, 0, 0, 0.7);
 	color: #fff;
 	padding: 10px;
+}
+.mapboxgl-popup-content i.fas, .mapboxgl-popup-content i.far {
+    width: px;
+    font-size: 20px;
+    line-height: 20px;
+    margin-right: 6px;
+    vertical-align: top;
 }
 .mapboxgl-popup-anchor-top .mapboxgl-popup-tip,
 .mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,
@@ -201,6 +192,22 @@ i.fa-users, i.fa-helicopter {
 }
 .menu div.active span {
 	background: no-repeat center/19px url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%23333'%3E%3C!-- Font Awesome Free 5.15.4 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) --%3E%3Cpath d='M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z'/%3E%3C/svg%3E");
+}
+.menu i.fas {
+    width: 21px;
+    font-size: 21px;
+    line-height: 39px;
+    margin-right: 6px;
+    vertical-align: top;
+}
+.menu i.fa-user {
+    font-size: 23px;
+}
+.menu i.fa-road {
+    font-size: 19px;
+}
+.menu i.fa-users, i.fa-helicopter {
+    font-size: 17px;
 }
 .info {
 	position: absolute;
