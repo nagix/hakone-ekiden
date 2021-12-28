@@ -42,13 +42,31 @@
             "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"
         },
         "et10b": {
-            "type":"raster-dem",
+            "type": "raster-dem",
             "tiles": [
                 "https://x.optgeo.org/et10b/et512/{z}/{x}/{y}.webp"
             ],
             "tileSize": 512,
             "maxzoom": 13,
             "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"
+        },
+        "geojson": {
+            "type": "geojson",
+            "data": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [139.7640599, 35.6874115],
+                            [139.7649901, 35.687258],
+                            [139.7648968, 35.6868851],
+                            [139.7639666, 35.6870386],
+                            [139.7640599, 35.6874115]
+                        ]
+                    ]
+                }
+            }
         }
     },
     "sprite": "mapbox://sprites/mapbox-map-design/ckhqrf2tz0dt119ny6azh975y/4snix0v8fnkivnb584t41dzcl",
@@ -161,8 +179,8 @@
             "source-layer": "water"
         },
         {
-            "source":"gsibv-vectortile-source-1-4-16",
-            "minzoom":13,
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 13,
             "id": "buildings4302",
             "metadata": {"name": "タンク"},
             "type": "fill-extrusion",
@@ -187,8 +205,8 @@
             }
         },
         {
-            "source":"gsibv-vectortile-source-1-4-16",
-            "minzoom":13,
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 13,
             "id": "buildings4301",
             "metadata": {"name": "巨大構造物"},
             "type": "fill-extrusion",
@@ -213,8 +231,8 @@
             }
         },
         {
-            "source":"gsibv-vectortile-source-1-4-16",
-            "minzoom":14,
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 14,
             "id": "buildings3111",
             "metadata": {"name": "普通無壁舎"},
             "type": "fill-extrusion",
@@ -239,8 +257,8 @@
             }
         },
         {
-            "source":"gsibv-vectortile-source-1-4-16",
-            "minzoom":13,
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 13,
             "id": "buildings3112",
             "metadata": {"name": "堅ろう無壁舎"},
             "type": "fill-extrusion",
@@ -265,8 +283,8 @@
             }
         },
         {
-            "source":"gsibv-vectortile-source-1-4-16",
-            "minzoom":14,
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 14,
             "id": "buildings3101",
             "metadata": {"name": "普通建物"},
             "type": "fill-extrusion",
@@ -291,8 +309,8 @@
             }
         },
         {
-            "source":"gsibv-vectortile-source-1-4-16",
-            "minzoom":13,
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 13,
             "id": "buildings3102",
             "metadata": {"name": "堅ろう建物"},
             "type": "fill-extrusion",
@@ -317,8 +335,8 @@
             }
         },
         {
-            "source":"gsibv-vectortile-source-1-4-16",
-            "minzoom":13,
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 13,
             "id": "buildings3103",
             "metadata": {"name": "高層建物"},
             "type": "fill-extrusion",
@@ -338,6 +356,17 @@
             ],
             "paint": {
                 "fill-extrusion-color": "rgb(190,230,255)",
+                "fill-extrusion-opacity": 0.8,
+                "fill-extrusion-height": 60
+            }
+        },
+        {
+            "id": "building-3d",
+            "type": "fill-extrusion",
+            "source": "geojson",
+            "minzoom": 13,
+            "paint": {
+                "fill-extrusion-color": "rgb(255,153,103)",
                 "fill-extrusion-opacity": 0.8,
                 "fill-extrusion-height": 60
             }

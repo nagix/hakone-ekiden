@@ -30,7 +30,7 @@
             "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"
         },
         "et10b": {
-            "type":"raster-dem",
+            "type": "raster-dem",
             "tiles": [
                 "https://x.optgeo.org/et10b/et512/{z}/{x}/{y}.webp"
             ],

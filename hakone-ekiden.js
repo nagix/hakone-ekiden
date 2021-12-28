@@ -1011,7 +1011,8 @@ const routes = [[
 	[139.02739, 35.19147],
 	[139.02672, 35.19074],
 	[139.02503, 35.18904],
-	[139.02464, 35.18929]
+	[139.02464, 35.18929],
+	[139.02447, 35.18941]
 ], [
 	[139.02465, 35.18929],
 	[139.02502, 35.18905],
@@ -2016,7 +2017,8 @@ const routes = [[
 	[139.76903, 35.68613],
 	[139.76832, 35.68627],
 	[139.76616, 35.6865],
-	[139.76462, 35.68676]
+	[139.76462, 35.68676],
+	[139.76439, 35.6868]
 ]];
 
 const distances = [[
@@ -3032,6 +3034,7 @@ const distances = [[
 	[107.11, 733.5],
 	[107.211, 728.7],
 	[107.455, 727.8],
+	[107.5, 726.8],
 	[107.5, 726.8]
 ], [
 	[0, 726.9],
@@ -4037,6 +4040,7 @@ const distances = [[
 	[109.196, 3],
 	[109.262, 2.9],
 	[109.458, 3.2],
+	[109.6, 3.4],
 	[109.6, 3.4]
 ]];
 
@@ -4051,19 +4055,19 @@ const trips = [{
 }];
 
 const sections = [[
-	{name: 'スタート 読売新聞社前', index: 0},
-	{name: '鶴見中継所', index: 84},
-	{name: '戸塚中継所', index: 226},
-	{name: '平塚中継所', index: 359},
-	{name: '小田原中継所', index: 510},
-	{name: 'ゴール 芦ノ湖', index: 1012}
+	{name: 'スタート 読売新聞社前', index: 0, distance: 0},
+	{name: '鶴見中継所', index: 84, distance: 21.359121097519537},
+	{name: '戸塚中継所', index: 226, distance: 44.43348892351547},
+	{name: '平塚中継所', index: 359, distance: 65.81535189365847},
+	{name: '小田原中継所', index: 510, distance: 86.73322688117908},
+	{name: 'ゴール 芦ノ湖', index: 1012, distance: 107.52088759314357}
 ], [
-	{name: 'スタート 芦ノ湖', index: 0},
-	{name: '小田原中継所', index: 451},
-	{name: '平塚中継所', index: 604},
-	{name: '戸塚中継所', index: 761},
-	{name: '鶴見中継所', index: 916},
-	{name: 'ゴール 読売新聞社前', index: 1003}
+	{name: 'スタート 芦ノ湖', index: 0, distance: 0},
+	{name: '小田原中継所', index: 451, distance: 20.742588224877196},
+	{name: '平塚中継所', index: 604, distance: 42.01596900292473},
+	{name: '戸塚中継所', index: 761, distance: 63.43093853112574},
+	{name: '鶴見中継所', index: 916, distance: 86.57072442054573},
+	{name: 'ゴール 読売新聞社前', index: 1003, distance: 109.64762216304358}
 ]];
 
 const teams = [{
@@ -4443,7 +4447,7 @@ function getSection(distance) {
 	for (let i = 1; i < sections[trip].length - 1; i++) {
 		const section = sections[trip][i];
 
-		if (distance < distances[trip][section.index][0]) {
+		if (distance < section.distance) {
 			return i - 1;
 		}
 	}
@@ -4621,8 +4625,12 @@ map.on('load', function () {
 							duration = 20 / 24,
 							duration2 = object2.userData.duration;
 
-						object.userData.mixer.setTime((performance.now() / 750 + i / teams.length * duration) % duration);
-						object2.userData.mixer.setTime((performance.now() / 750 + i / teams.length * duration2) % duration2);
+						if (object) {
+							object.userData.mixer.setTime((performance.now() / 750 + i / teams.length * duration) % duration);
+						}
+						if (object2) {
+							object2.userData.mixer.setTime((performance.now() / 750 + i / teams.length * duration2) % duration2);
+						}
 					}
 					requestAnimationFrame(animate);
 				}
@@ -4656,11 +4664,10 @@ map.on('load', function () {
 		}
 	}, buildingLayerId);
 
-	for (const {name, index} of sections[trip]) {
-		const distance = distances[trip][index][0],
-			point1 = turf.along(routeFeature, distance),
+	for (const {name, index, distance} of sections[trip]) {
+		const point1 = turf.along(routeFeature, distance),
 			point2 = turf.along(routeFeature, distance + 0.001),
-			bearing = turf.bearing(point2, point1) + 10,
+			bearing = turf.bearing(point2, point1) - 10,
 			coord = turf.getCoord(point1);
 			popup = new AnimatedPopup({closeButton: false, closeOnClick: false, offset: [0, -60]})
 				.setLngLat(coord)
@@ -4872,7 +4879,7 @@ map.on('load', function () {
 						});
 					}
 					if (!lastDataLoadComplete) {
-						const distance = clamp(teams[1].distance + teams[1].speed * (now - teams[1].ts * 1000) / 3600000, 0, distances[trip][distances[trip].length - 1][0]),
+						const distance = clamp(teams[1].distance + teams[1].speed * (now - teams[1].ts * 1000) / 3600000, 0, sections[trip][5].distance + 0.02),
 							point = turf.along(routeFeature, distance);
 
 						if (now / 1000 > s + 1) {
@@ -4895,7 +4902,7 @@ map.on('load', function () {
 		for (let i = 1; i < teams.length; i++) {
 			const team = teams[i];
 			if (!isNaN(team.distance) && !isNaN(team.speed) && !isNaN(team.ts)) {
-				const distance = clamp(team.distance + team.speed * (now - team.ts * 1000) / 3600000, 0, distances[trip][distances[trip].length - 1][0]),
+				const distance = clamp(team.distance + team.speed * (now - team.ts * 1000) / 3600000, 0, sections[trip][5].distance + 0.02),
 					point = turf.along(routeFeature, distance),
 					point2 = turf.along(routeFeature, distance + 0.001),
 					bearing = team.bearing = turf.bearing(point, point2),
@@ -4921,13 +4928,17 @@ map.on('load', function () {
 					team.object.position.z = mCoord.z - modelOrigin.z;
 					team.object.rotation.z = THREE.MathUtils.degToRad(-bearing);
 
+					if (distance === sections[trip][5].distance + 0.02) {
+						team.object.removeFromParent();
+						delete team.object;
+					}
 				}
 				if (team.object2) {
 					const section = getSection(distance),
-						baseDistance = distances[trip][sections[trip][section].index][0],
-						nextDistance = distances[trip][sections[trip][section + 1].index][0];
+						baseDistance = sections[trip][section].distance,
+						nextDistance = sections[trip][section + 1].distance;
 
-					if (section < 5 && nextDistance - distance <= 0.1) {
+					if (section < 4 && nextDistance - distance <= 0.1) {
 						const point4 = turf.along(routeFeature, nextDistance),
 							point5 = turf.along(routeFeature, nextDistance - 0.001),
 							bearing2 = turf.bearing(point4, point5),
@@ -4944,7 +4955,7 @@ map.on('load', function () {
 						team.object2.userData.actions[1].weight = 1;
 						team.object2.userData.duration = 40 / 24;
 						team.object2.visible = true;
-					} else if (section > 0 && distance - baseDistance <= 0.02) {
+					} else if (section > 0 && section < 4 && distance - baseDistance <= 0.02) {
 						const point4 = turf.along(routeFeature, baseDistance),
 							point5 = turf.along(routeFeature, baseDistance + 0.001),
 							bearing2 = turf.bearing(point4, point5),
@@ -4976,8 +4987,8 @@ map.on('load', function () {
 				}
 				if (trackingTeam === i || (!trackingTeam && i === 1)) {
 					const section = getSection(distance),
-						baseDistance = distances[trip][sections[trip][section].index][0],
-						nextDistance = distances[trip][sections[trip][section + 1].index][0];
+						baseDistance = sections[trip][section].distance,
+						nextDistance = sections[trip][section + 1].distance;
 
 					document.getElementById('trip').innerText = trips[trip].name;
 					document.getElementById('section').innerText = trip * 5 + section + 1;
