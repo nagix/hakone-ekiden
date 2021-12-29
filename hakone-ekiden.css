@@ -80,7 +80,7 @@ body {
 	left: 0;
 	padding: 10px;
 	white-space: nowrap;
-	z-index: 1;
+	z-index: 97;
 }
 .map-overlay-inner {
 	background-color: rgba(0, 0, 0, 0.7);
@@ -241,5 +241,5 @@ body {
 	background-color: rgba(0, 0, 0, 0.7);;
 	display: block;
 	transition: bottom 1s;
-	z-index: 3;
+	z-index: 98;
 }

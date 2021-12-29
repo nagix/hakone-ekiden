@@ -4049,6 +4049,7 @@ const trips = [{
 	center: routes[0][0],
 	bearing: 95,
 	startTime: 1641078000000
+//	startTime: Date.now() + 10000
 }, {
 	name: '復路',
 	center: routes[1][0],
@@ -4139,10 +4140,6 @@ const teams = [{
 	runners: ['中山 雄太 (3年)', '並木 寧音 (2年)', '斎藤 俊輔 (4年)', '宮下 資大 (4年)', '福谷 颯太 (3年)', '鈴木 康也 (1年)', '田島 公太郎 (1年)', '大野 陽人 (3年)', '辻野 大輝 (3年)', '諸星 颯大 (3年)']
 }];
 
-for (const team of teams) {
-	team.speedHistory = [{d: [], s: []}, {d: [], s: []}];
-}
-
 const trackingModes = [
 	'auto',
 	'normal',
@@ -4177,6 +4174,7 @@ let lastViewSwitch = Date.now();
 let trackingAnimationID;
 let swiper;
 let chartSection;
+let leadingTeam = 1;
 let maxDistance = 0;
 
 function clamp(value, lower, upper) {
@@ -4337,6 +4335,11 @@ function jumpTo(options) {
 		if (trackingMode === 'front' || trackingMode === 'front-above') {
 			bearing = (bearing + 360) % 360 - 180;
 		}
+		if (trackingMode === 'front') {
+			bearing += 5;
+		} else if (trackingMode === 'back') {
+			bearing -= 5;
+		}
 		if (bearingFactor >= 0) {
 			bearing = currentBearing + ((bearing - currentBearing + 540) % 360 - 180) * bearingFactor;
 		}
@@ -4423,8 +4426,8 @@ function updateChart() {
 	}
 
 	const team = teams[trackingTeam],
-		distance = clamp(team.distance + team.speed * (Date.now() - team.ts * 1000) / 3600000, 0, sections[trip][5].distance),
-		section = chartSection = getSection(distance),
+		distance = team.estimatedDistance,
+		section = chartSection = team.estimatedSection,
 		baseDistance = sections[trip][section].distance,
 		nextDistance = sections[trip][section + 1].distance,
 		annotations = charts[swiper.activeIndex].config.options.plugins.annotation.annotations;
@@ -4463,6 +4466,7 @@ Chart.defaults.color = '#fff';
 const osm = location.search.match(/osm/);
 const styleFile = osm ? 'style-osm.json' : 'style.json';
 const buildingLayerId = osm ? 'buildings4302' : 'building-3d';
+const autoPaging = location.search.match(/auto/);
 
 mapboxgl.accessToken = 'pk.eyJ1IjoibmFnaXgiLCJhIjoiY2tqZXZ1MjQ0MGE3MDJ6bzc2cmNyaWlrOSJ9.QjrikO3RTE20AMURILSTWg';
 const map = new mapboxgl.Map({
@@ -4498,7 +4502,10 @@ map.once('styledata', function () {
 	for (const mode of trackingModes) {
 		const e = document.getElementById(`${mode}-view`);
 		e.addEventListener('click', e => {
-			document.querySelector('.menu div.active').classList.remove('active');
+			const active = document.querySelector('.menu div.active').classList;
+			if (active) {
+				active.remove('active');
+			}
 			e.target.classList.add('active');
 
 			if (mode === 'auto') {
@@ -4694,6 +4701,13 @@ map.once('styledata', function () {
 		});
 	}
 
+	for (const team of teams) {
+		team.distance = 0;
+		team.speed = 20 - Math.random() * 0.6;
+		team.ts = trips[trip].startTime / 1000;
+		team.speedHistory = [{d: [], s: []}, {d: [], s: []}];
+	}
+
 	for (let i = teams.length - 1; i > 0; i--) {
 		const team = teams[i];
 		const popup = new AnimatedPopup({anchor: 'top', closeButton: false});
@@ -4704,7 +4718,7 @@ map.once('styledata', function () {
 
 		el.addEventListener('mouseenter', event => {
 			if (!popup.isOpen()) {
-				team.marker.getPopup().setHTML(`${team.name}<br>${team.runners[trip * 5 + team.section]}`);
+				team.marker.getPopup().setHTML(`${team.name}<br>${team.runners[trip * 5 + team.estimatedSection]}`);
 				team.marker.togglePopup();
 			}
 		});
@@ -4988,18 +5002,20 @@ map.once('styledata', function () {
 							ts = now / 1000;
 						}
 
-						Object.assign(teams[id], {
-							lat,
-							lng,
-							distance,
-							speed,
-							section,
-							ts
-						});
+						if (trip !== 0 || now > trips[0].startTime + 60000) {
+							Object.assign(teams[id], {
+								lat,
+								lng,
+								distance,
+								speed,
+								section,
+								ts
+							});
+						}
 					}
 					if (!lastDataLoadComplete) {
 						if (now > trips[trip].startTime - 1000000 && now <= trips[trip].startTime) {
-							trackingTeam = 1;
+							trackingTeam = leadingTeam;
 							document.getElementById('panel').style.bottom = 0;
 						} else {
 							setTimeout(() => {
@@ -5034,15 +5050,18 @@ map.once('styledata', function () {
 		for (let i = 1; i < teams.length; i++) {
 			const team = teams[i];
 			if (!isNaN(team.distance) && !isNaN(team.speed) && !isNaN(team.ts)) {
-				const distance = clamp(team.distance + team.speed * (now - team.ts * 1000) / 3600000, 0, sections[trip][5].distance + 0.02),
+				const distance = team.estimatedDistance = clamp(team.distance + team.speed * (now - team.ts * 1000) / 3600000, 0, sections[trip][5].distance + 0.02),
 					point = turf.along(routeFeature, distance),
 					point2 = turf.along(routeFeature, distance + 0.001),
 					bearing = team.bearing = turf.bearing(point, point2),
 					point3 = turf.destination(point, team.offset / 1000, bearing + 90),
 					coord = team.coord = turf.getCoord(point3),
-					section = team.section = getSection(distance);
+					section = team.estimatedSection = getSection(distance);
 
-				maxDistance = Math.max(maxDistance, distance);
+				if (distance > maxDistance) {
+					maxDistance = distance;
+					leadingTeam = i;
+				}
 
 				if (i === 1) {
 					const elevation = map.queryTerrainElevation(coord);
@@ -5147,13 +5166,32 @@ map.once('styledata', function () {
 			}
 		}
 
-		if (trackingTeam && autoTrackingMode && now >= lastViewSwitch + 30000) {
-			if (now > trips[trip].startTime - 33000 && now <= trips[trip].startTime) {
-				trackingMode = 'front';
-			} else {
-				trackingMode = trackingModes[Math.floor(Math.random() * (trackingModes.length - 2)) + 2];
+		if (trackingTeam && now >= lastViewSwitch + 30000) {
+			[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+				.sort((a, b) => teams[a].estimatedDistance - teams[b].estimatedDistance)
+				.forEach((v, i) => {
+					teams[v].marker.getElement().style.zIndex = i + 1;
+				});
+
+			if (autoPaging) {
+				swiper.slideTo((swiper.activeIndex + 1) % 2);
+				if (trackingTeam !== leadingTeam) {
+					trackingTeam = leadingTeam;
+					if (!autoTrackingMode) {
+						startTrackingAnimation();
+					}
+				}
 			}
-			startTrackingAnimation();
+
+			if (autoTrackingMode) {
+				if (now > trips[trip].startTime - 33000 && now <= trips[trip].startTime) {
+					trackingMode = 'front';
+				} else {
+					trackingMode = trackingModes[Math.floor(Math.random() * (trackingModes.length - 2)) + 2];
+				}
+				startTrackingAnimation();
+			}
+
 			lastViewSwitch = now;
 		}
 
