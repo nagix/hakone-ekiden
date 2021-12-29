@@ -4047,26 +4047,28 @@ const distances = [[
 const trips = [{
 	name: '往路',
 	center: routes[0][0],
-	bearing: 95
+	bearing: 95,
+	startTime: 1641078000000
 }, {
 	name: '復路',
 	center: routes[1][0],
-	bearing: -50
+	bearing: -50,
+	startTime: 1641164400000
 }];
 
 const sections = [[
-	{name: '<i class="far fa-flag"></i>スタート 読売新聞社前', index: 0, distance: 0},
-	{name: '<i class="fas fa-flag"></i>鶴見中継所', index: 84, distance: 21.359121097519537},
-	{name: '<i class="fas fa-flag"></i>戸塚中継所', index: 226, distance: 44.43348892351547},
-	{name: '<i class="fas fa-flag"></i>平塚中継所', index: 359, distance: 65.81535189365847},
-	{name: '<i class="fas fa-flag"></i>小田原中継所', index: 510, distance: 86.73322688117908},
+	{name: '<i class="far fa-flag"></i>スタート 読売新聞社前', index: 0, distance: 0, record: 20.974587002474177},
+	{name: '<i class="fas fa-flag"></i>鶴見中継所', index: 84, distance: 21.359121097519537, record: 21.035128937347521},
+	{name: '<i class="fas fa-flag"></i>戸塚中継所', index: 226, distance: 44.43348892351547, record: 21.591783083454362},
+	{name: '<i class="fas fa-flag"></i>平塚中継所', index: 359, distance: 65.81535189365847, record: 20.744999987623745},
+	{name: '<i class="fas fa-flag"></i>小田原中継所', index: 510, distance: 86.73322688117908, record: 17.712562973508204},
 	{name: '<i class="fas fa-flag-checkered"></i>ゴール 芦ノ湖', index: 1012, distance: 107.52088759314357}
 ], [
-	{name: '<i class="far fa-flag"></i>スタート 芦ノ湖', index: 0, distance: 0},
-	{name: '<i class="fas fa-flag"></i>小田原中継所', index: 451, distance: 20.742588224877196},
-	{name: '<i class="fas fa-flag"></i>平塚中継所', index: 604, distance: 42.01596900292473},
-	{name: '<i class="fas fa-flag"></i>戸塚中継所', index: 761, distance: 63.43093853112574},
-	{name: '<i class="fas fa-flag"></i>鶴見中継所', index: 916, distance: 86.57072442054573},
+	{name: '<i class="far fa-flag"></i>スタート 芦ノ湖', index: 0, distance: 0, record: 21.726307131090458},
+	{name: '<i class="fas fa-flag"></i>小田原中継所', index: 451, distance: 20.742588224877196, record: 20.698424540803006},
+	{name: '<i class="fas fa-flag"></i>平塚中継所', index: 604, distance: 42.01596900292473, record: 20.134210055242527},
+	{name: '<i class="fas fa-flag"></i>戸塚中継所', index: 761, distance: 63.43093853112574, record: 20.412455085006607},
+	{name: '<i class="fas fa-flag"></i>鶴見中継所', index: 916, distance: 86.57072442054573, record: 20.164279580823364},
 	{name: '<i class="fas fa-flag-checkered"></i>ゴール 読売新聞社前', index: 1003, distance: 109.64762216304358}
 ]];
 
@@ -4074,68 +4076,72 @@ const teams = [{
 	name: ''
 }, {
 	name: '駒澤大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['唐澤 拓海 (2年)', '田澤 廉 (3年)', '佐藤 条二 (1年)', '大坪 幸太 (3年)', '金子 伊吹 (2年)', '篠原 倖太朗 (1年)', '新矢 連士 (4年)', '赤星 雄斗 (2年)', '山野 力 (3年)', '東山 静也 (3年)']
 }, {
 	name: '創価大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['溝口 泰良 (2年)', 'Ｐ・ムルワ (3年)', '小暮 栄輝 (1年)', '嶋津 雄大 (4年)', '三上 雄太 (4年)', '濱野 将基 (3年)', '山森 龍暁 (2年)', '石井 大揮 (2年)', '中武 泰希 (4年)', '本田 晃士郎 (3年)']
 }, {
 	name: '東洋大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['児玉 悠輔 (3年)', '松山 和希 (2年)', '大沼 翼 (3年)', '木本 大地 (3年)', '宮下 隼人 (4年)', '九嶋 恵舜 (2年)', '梅崎 蓮 (1年)', '蝦夷森 章太 (4年)', '柏 優吾 (3年)', '吉田 周 (1年)']
 }, {
 	name: '青山学院大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['湯原 慶吾 (4年)', '近藤 幸太郎 (3年)', '太田 蒼生 (1年)', '関口 雄大 (3年)', '若林 宏樹 (1年)', '髙橋 勇輝 (4年)', '宮坂 大器 (3年)', '西久保 遼 (3年)', '中村 唯翔 (3年)', '中倉 啓敦 (3年)']
 }, {
 	name: '東海大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['溝口 仁 (学年)', '松崎 咲人 (3年)', '金澤 有真 (3年)', '本間 敬大 (4年)', '杉本 将太 (3年)', '川上 勇士 (3年)', '水野 龍志 (1年)', '入田 優希 (2年)', '長田 駿佑 (4年)', '吉冨 裕太 (4年)']
 }, {
 	name: '早稲田大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['北村 光 (2年)', '河合 陽平 (4年)', '太田 直希 (4年)', '石塚 陽士 (1年)', '伊藤 大志 (1年)', '栁本 匡哉 (2年)', '安田 博登 (3年)', '千明龍之佑 (4年)', '佐藤 航希 (2年)', '室伏 祐吾 (4年)']
 }, {
 	name: '順天堂大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['平 駿介 (3年)', '藤原 優希 (2年)', '伊豫田達弥 (3年)', '石井 一希 (2年)', '神谷 青輝 (1年)', '服部 壮馬 (1年)', '海老澤憲伸 (1年)', '津田 将希 (4年)', '荒木 勇人 (3年)', '近藤 亮太 (4年)']
 }, {
 	name: '帝京大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['小野隆一朗 (2年)', '中村 風馬 (4年)', '遠藤 大地 (4年)', '末次 海斗 (2年)', '細谷 翔馬 (4年)', '北野 開平 (3年)', '元永好多朗 (3年)', '橋本 尚斗 (4年)', '森田 瑛介 (4年)', '小林 大晟 (1年)']
 }, {
 	name: '國學院大學',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['鶴 元太 (1年)', '伊地知賢造 (2年)', '沼井 優斗 (1年)', '中西 大翔 (3年)', '殿地 琢朗 (4年)', '原 秀寿 (1年)', '松延 大誠 (4年)', '石川 航平 (4年)', '瀬尾 秀介 (2年)', '坂本 健悟 (3年)']
 }, {
 	name: '東京国際大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['山谷 昌也 (3年)', 'Y・ヴィンセント (3年)', '生田 琉海 (2年)', '堀畑 佳吾 (3年)', '倉掛 響 (1年)', '林 優策 (2年)', '白井 勇佑 (1年)', '村松 敬哲 (2年)', '宗像 聖 (3年)', '三浦瞭太郎 (4年)']
 }, {
 	name: '明治大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['手嶋 杏丞 (4年)', '新谷紘ノ介 (1年)', '曳田 道斗 (1年)', '小澤 大輝 (3年)', '下條 乃將 (3年)', '杉本 龍陽 (3年)', '漆畑 瑠人 (3年)', '櫛田 佳希 (3年)', '金橋 佳佑 (4年)', '橋本 大輝 (4年)']
 }, {
 	name: '中央大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['吉居 大和 (2年)', '手島 駿 (4年)', '園木 大斗 (2年)', '中野 翔太 (2年)', '阿部 陽樹 (1年)', '若林 陽大 (3年)', '居田 優太 (2年)', '田井野悠介 (3年)', '湯浅 仁 (2年)', '森 凪也 (4年)']
 }, {
 	name: '日本体育大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['大森 椋太 (2年)', '藤本 珠輝 (3年)', '水金 大亮 (2年)', '分須 尊紀 (1年)', '吉冨 純也 (2年)', '盛本 聖也 (3年)', '漆畑 徳輝 (2年)', '九嶋 大雅 (3年)', '岡嶋 翼 (4年)', '名村 樹哉 (3年)']
 }, {
 	name: '山梨学院大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['木山 達哉 (3年)', 'Ｐ・オニエゴ (4年)', '髙木 翔瑛 (2年)', '伊東 大暉 (3年)', '成毛 志優 (4年)', '矢島 洸一 (4年)', '川口航士郎 (4年)', '坪井 海門 (4年)', '石部 夏希 (3年)', '篠原 楓 (3年)']
 }, {
 	name: '神奈川大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['巻田 理空 (2年)', '西方 大珠 (4年)', '中原 優人 (1年)', '小林 政澄 (2年)', '山﨑 諒介 (3年)', '横澤 清己 (4年)', '佐々木亮輔 (2年)', '鈴木 玲央 (3年)', '小林 篤貴 (2年)', '落合 葵斗 (4年)']
 }, {
 	name: '法政大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['内田 隼太 (3年)', '鎌田 航生 (4年)', '松本 康汰 (3年)', '高須賀大勢 (2年)', '細迫 海気 (2年)', '久納   碧 (4年)', '中園慎太朗 (3年)', '稲毛 崇斗 (2年)', '扇     育 (3年)', '山本   燎 (4年)']
 }, {
 	name: '中央学院大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['栗原 啓吾 (4年)', '吉田 礼志 (1年)', '武川流以名 (3年)', '伊藤 秀虎 (2年)', '吉本 光希 (3年)', '工藤 巧夢 (1年)', '松井 尚希 (4年)', '堀田 捷仁 (1年)', '飯塚 達也 (2年)', '井澗 翔太 (2年)']
 }, {
 	name: '駿河台大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['入江 泰世 (4年)', '榊原 嵩史 (4年)', '松本 圭悟 (3年)', '今井 隆生 (4年)', '永井 竜二 (3年)', '小泉 謙 (3年)', '長谷部巧人 (2年)', '池原 悠月 (1年)', '田尻   健 (4年)', '阪本 大貴 (4年)']
 }, {
 	name: '専修大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['千代島宗汰 (1年)', '髙瀨 桂 (3年)', 'D・キサイサ (1年)', '冨永 裕憂 (3年)', '野下 稜平 (2年)', '横山 佑羽 (4年)', '江口 達宗 (4年)', '岩間 暁 (4年)', '服部 友太 (4年)', '佐々木詩音 (4年)']
 }, {
 	name: '国士舘大学',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['木榑 杏祐 (4年)', 'R・ヴィンセント (4年)', '荻原 陸斗 (4年)', '三代 和弥 (4年)', '山本 雷我 (2年)', '長谷川 潤 (4年)', '西田 大智 (1年)', '清水 悠雅 (3年)', '松井 遼太 (1年)', '望月 武 (3年)']
 }, {
 	name: '関東学生連合',
-	runners: ['1区走者氏名 (学年)', '2区走者氏名 (学年)', '3区走者氏名 (学年)', '4区走者氏名 (学年)', '5区走者氏名 (学年)', '6区走者氏名 (学年)', '7区走者氏名 (学年)', '8区走者氏名 (学年)', '9区走者氏名 (学年)', '10区走者氏名 (学年)']
+	runners: ['中山  雄太 (3年)', '並木  寧音 (2年)', '斎藤  俊輔 (4年)', '宮下  資大 (4年)', '福谷  颯太 (3年)', '鈴木  康也 (1年)', '田島公太郎 (1年)', '大野  陽人 (3年)', '辻野  大輝 (3年)', '諸星  颯大 (3年)']
 }];
+
+for (const team of teams) {
+	team.speedHistory = [{d: [], s: []}, {d: [], s: []}];
+}
 
 const trackingModes = [
 	'auto',
@@ -4154,53 +4160,9 @@ const trackingParams = {
 	pitch: {}
 };
 
-const SQRT3 = Math.sqrt(3);
+const charts = [];
 
-// TEST
-const s = Date.now() / 1000 + 10;
-//const s = 1640386800;
-const d = 0;
-const f = 0;
-//const f = 900;
-const testData = {
-	"status": {
-		"msg": "",
-		"marker": 1,
-		"sg": 1,
-		"course": 2,
-		"reload": "",
-		"reloadurl": "",
-		"leading": 0,
-		"interval": 10,
-		"camera": [0,1,2,3,4],
-		"now": "2021\/12\/16 19:18:52",
-		"runner": "20211204.1"
-	},
-	"points":[
-		[1, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s],
-		[9, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[0, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[8, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[10, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[4, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[2, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[5, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[11, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[14, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[3, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[7, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[19, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[6, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[13, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[16, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[18, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[15, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[17, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[12, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[21, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)],
-		[20, 35.68676, 139.76462, 1, 0, d, 20 - Math.random() * 0.6, 1003, 5, s + clamp(Math.random() * f, 0, 600)]
-	]
-};
+const SQRT3 = Math.sqrt(3);
 
 const trip = 0;
 const routeFeature = turf.lineString(routes[trip]);
@@ -4213,8 +4175,9 @@ let trackingMode = 'front';
 let autoTrackingMode = true;
 let lastViewSwitch = Date.now();
 let trackingAnimationID;
-let chart;
+let swiper;
 let chartSection;
+let maxDistance = 0;
 
 function clamp(value, lower, upper) {
 	return Math.min(Math.max(value, lower), upper);
@@ -4454,6 +4417,46 @@ function getSection(distance) {
 	return sections[trip].length - 2;
 }
 
+function updateChart() {
+	if (isNaN(trackingTeam)) {
+		return;
+	}
+
+	const team = teams[trackingTeam],
+		distance = clamp(team.distance + team.speed * (Date.now() - team.ts * 1000) / 3600000, 0, sections[trip][5].distance),
+		section = chartSection = getSection(distance),
+		baseDistance = sections[trip][section].distance,
+		nextDistance = sections[trip][section + 1].distance,
+		annotations = charts[swiper.activeIndex].config.options.plugins.annotation.annotations;
+
+	if (swiper.activeIndex === 0) {
+		for (let i = 1; i < teams.length; i++) {
+			const dataset = charts[0].config.data.datasets[i - 1],
+				data = dataset.data = [];
+			for (let j = 0; j < teams[i].speedHistory[trip].d.length; j++) {
+				const d = teams[i].speedHistory[trip].d[j];
+				if (d >= baseDistance && d <= nextDistance) {
+					data.push({x: d - baseDistance, y: teams[i].speedHistory[trip].s[j]});
+				}
+			}
+			dataset.borderColor = i === trackingTeam ? 'rgb(0, 255, 0)' : 'rgba(0, 102, 0)';
+			dataset.borderWidth = i === trackingTeam ? 3 : 1;
+			dataset.label = `${teams[i].name} ${teams[i].runners[section]}`;
+			dataset.order = i === trackingTeam ? 0 : 1;
+		}
+		charts[0].config.options.plugins.title.text = `${trip * 5 + section + 1}区 ランナー速度`;
+		annotations.record.yMin = annotations.record.yMax = sections[trip][section].record;
+	} else {
+		const data = distances[trip].slice(sections[trip][section].index, sections[trip][section + 1].index + 1);
+		charts[1].config.data.datasets[0].data = data.map(([d, e]) => ({x: d - baseDistance, y: e}));
+		charts[1].config.options.plugins.title.text = `${trip * 5 + section + 1}区 コース標高`;
+	}
+
+	charts[swiper.activeIndex].config.options.scales.x.max = nextDistance - baseDistance;
+	annotations.position.xMin = annotations.position.xMax = distance - baseDistance;
+	charts[swiper.activeIndex].update();
+}
+
 Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.2)';
 Chart.defaults.color = '#fff';
 
@@ -4471,7 +4474,7 @@ const map = new mapboxgl.Map({
 	pitch: 80
 });
 
-map.on('load', function () {
+map.once('styledata', function () {
 	map.addControl(new mapboxgl.NavigationControl());
 	map.addControl(new mapboxgl.FullscreenControl({container: document.getElementById('map')}));
 	map.addControl(new MapboxGLButtonControl([{
@@ -4684,15 +4687,15 @@ map.on('load', function () {
 				center: turf.getCoord(coord),
 				zoom: 21,
 				bearing,
-				pitch: 80
+				pitch: 80,
+				speed: 0.5
 			});
 		});
 	}
 
 	for (let i = teams.length - 1; i > 0; i--) {
 		const team = teams[i];
-		const popup = new AnimatedPopup({anchor: 'top', closeButton: false})
-			.setText(team.name);
+		const popup = new AnimatedPopup({anchor: 'top', closeButton: false});
 		const el = document.createElement('div');
 
 		el.className = 'marker';
@@ -4700,6 +4703,7 @@ map.on('load', function () {
 
 		el.addEventListener('mouseenter', event => {
 			if (!popup.isOpen()) {
+				team.marker.getPopup().setHTML(`${team.name}<br>${team.runners[trip * 5 + team.section]}`);
 				team.marker.togglePopup();
 			}
 		});
@@ -4721,6 +4725,7 @@ map.on('load', function () {
 			}
 			startTrackingAnimation();
 			document.getElementById('panel').style.bottom = 0;
+			updateChart();
 
 			event.stopPropagation();
 		});
@@ -4782,7 +4787,98 @@ map.on('load', function () {
 		}
 	});
 
-	chart = new Chart(document.getElementById('chart'), {
+	swiper = new Swiper('.swiper', {
+		navigation: {
+			nextEl: '.swiper-button-next',
+			prevEl: '.swiper-button-prev'
+		}
+	});
+	swiper.on('slideChange', updateChart);
+
+	charts[0] = new Chart(document.getElementById('chart-speed'), {
+		type: 'line',
+		data: {
+			datasets: teams.slice(1).map(team => ({
+				label: '',
+				data: [],
+				borderColor: 'rgb(0, 127, 0)',
+				backgroundColor: 'rgb(0, 0, 0)',
+				borderWidth: 1,
+				pointRadius: 0
+			}))
+		},
+		options: {
+			maintainAspectRatio: false,
+			layout: {
+				padding: {
+					left: 40,
+					top: 5,
+					right: 50,
+					bottom: 10
+				}
+			},
+			scales: {
+				x: {
+					type: 'linear',
+					min: 0,
+					grid: {
+						tickLength: 0
+					}
+				},
+				y: {
+					grid: {
+						tickLength: 0
+					}
+				}
+			},
+			interaction: {
+				mode: 'nearest',
+				intersect: false
+			},
+			animation: false,
+			plugins: {
+				title: {
+					text: '',
+					display: true
+				},
+				legend: {
+					display: false
+				},
+				tooltip: {
+					callbacks: {
+						title: context => `距離 ${context[0].parsed.x.toFixed(2)} km`,
+						label: context => `${context.dataset.label} ${context.parsed.y} km/s`
+					}
+				},
+				annotation: {
+					annotations: {
+						position: {
+							type: 'line',
+							borderColor: 'rgb(255, 0, 0)',
+							xMin: 0,
+							xMax: 0
+						},
+						record: {
+							type: 'line',
+							borderColor: 'rgb(255, 153, 0)',
+							yMin: 0,
+							yMax: 0,
+							label: {
+								content: '区間新',
+								enabled: true,
+								color: 'rgb(0, 0, 0)',
+								backgroundColor: 'rgba(255, 153, 0)',
+								position: '80%'
+							},
+							drawTime: 'beforeDatasetsDraw'
+						}
+					}
+				}
+			}
+		}
+	});
+
+	charts[1] = new Chart(document.getElementById('chart-elevation'), {
 		type: 'line',
 		data: {
 			datasets: [{
@@ -4796,18 +4892,25 @@ map.on('load', function () {
 			maintainAspectRatio: false,
 			layout: {
 				padding: {
-					left: 10,
+					left: 40,
 					top: 5,
-					right: 20,
+					right: 50,
 					bottom: 10
 				}
 			},
 			scales: {
 				x: {
-					type: 'linear'
+					type: 'linear',
+					min: 0,
+					grid: {
+						tickLength: 0
+					}
 				},
 				y: {
-					beginAtZero: true
+					min: 0,
+					grid: {
+						tickLength: 0
+					}
 				}
 			},
 			interaction: {
@@ -4817,7 +4920,7 @@ map.on('load', function () {
 			animation: false,
 			plugins: {
 				title: {
-					text: 'ルート標高',
+					text: '',
 					display: true
 				},
 				legend: {
@@ -4831,7 +4934,7 @@ map.on('load', function () {
 				},
 				annotation: {
 					annotations: {
-						line: {
+						position: {
 							type: 'line',
 							borderColor: 'rgb(255, 0, 0)',
 							xMin: 0,
@@ -4854,9 +4957,6 @@ map.on('load', function () {
 			fetch('https://mini-tokyo.appspot.com/hakone')
 				.then(response => response.json())
 				.then(result => {
-					// TEST
-					result = testData;
-
 					for (const point of result.points) {
 						const now = Date.now();
 						const id = point[0];
@@ -4870,7 +4970,13 @@ map.on('load', function () {
 						const prevSpeed = teams[id].speed;
 						const prevTs = teams[id].ts;
 
-						if (!isNaN(prevDistance) && !isNaN(prevSpeed) && !isNaN(prevTs)) {
+						const history = teams[id].speedHistory[trip];
+						if (distance > history.d[history.d.length - 1]) {
+							history.d.push(distance);
+							history.s.push(speed);
+						}
+
+						if (!isNaN(prevDistance) && !isNaN(prevSpeed) && !isNaN(prevTs) && now < lastDataLoad + 20000) {
 							const adjustedDistance = prevDistance + prevSpeed * (now - prevTs * 1000) / 3600000;
 							const adjustedSpeed = (distance + speed * (now + 10000 - ts * 1000) / 3600000 - adjustedDistance) * 360;
 
@@ -4889,23 +4995,36 @@ map.on('load', function () {
 						});
 					}
 					if (!lastDataLoadComplete) {
-						const distance = clamp(teams[1].distance + teams[1].speed * (now - teams[1].ts * 1000) / 3600000, 0, sections[trip][5].distance + 0.02),
-							point = turf.along(routeFeature, distance);
-
-						if (now / 1000 > s + 1) {
-							map.flyTo({
-								center: turf.getCoord(point),
-								zoom: 17,
-								bearing : 0,
-								pitch: 60
-							});
-						} else {
+						if (now > trips[trip].startTime - 1000000 && now <= trips[trip].startTime) {
 							trackingTeam = 1;
 							document.getElementById('panel').style.bottom = 0;
+						} else {
+							setTimeout(() => {
+								map.flyTo({
+									center: turf.getCoord(turf.along(routeFeature, maxDistance + 0.1)),
+									zoom: 17,
+									bearing : 0,
+									pitch: 60,
+									speed: 0.5
+								});
+							}, 3000);
 						}
 					}
+					updateChart();
 					lastDataLoadComplete = now;
 				});
+
+			if (now >= lastDataLoad + 20000) {
+				fetch(`https://mini-tokyo.appspot.com/hakone?q=speed-${trip}`)
+					.then(response => response.json())
+					.then(result => {
+						for (let i = 1; i < result.length; i++) {
+							teams[i].speedHistory[trip] = result[i];
+						}
+						updateChart();
+					})
+			}
+
 			lastDataLoad = now;
 		}
 
@@ -4917,7 +5036,10 @@ map.on('load', function () {
 					point2 = turf.along(routeFeature, distance + 0.001),
 					bearing = team.bearing = turf.bearing(point, point2),
 					point3 = turf.destination(point, team.offset / 1000, bearing + 90),
-					coord = team.coord = turf.getCoord(point3);
+					coord = team.coord = turf.getCoord(point3),
+					section = team.section = getSection(distance);
+
+				maxDistance = Math.max(maxDistance, distance);
 
 				if (i === 1) {
 					const elevation = map.queryTerrainElevation(coord);
@@ -4944,8 +5066,7 @@ map.on('load', function () {
 					}
 				}
 				if (team.object2) {
-					const section = getSection(distance),
-						baseDistance = sections[trip][section].distance,
+					const baseDistance = sections[trip][section].distance,
 						nextDistance = sections[trip][section + 1].distance;
 
 					if (section < 4 && nextDistance - distance <= 0.1) {
@@ -4996,8 +5117,7 @@ map.on('load', function () {
 					});
 				}
 				if (trackingTeam === i || (!trackingTeam && i === 1)) {
-					const section = getSection(distance),
-						baseDistance = sections[trip][section].distance,
+					const baseDistance = sections[trip][section].distance,
 						nextDistance = sections[trip][section + 1].distance;
 
 					document.getElementById('trip').innerText = trips[trip].name;
@@ -5013,18 +5133,8 @@ map.on('load', function () {
 						document.getElementById('tracking-runner').innerText = teams[i].runners[trip * 5 + section];
 
 						if (chartSection !== section) {
-							const data = distances[trip].slice(sections[trip][section].index, sections[trip][section + 1].index + 1);
-
-							chart.config.data.datasets[0].data = data.map(([d, e]) => ({x: d - baseDistance, y: e}));
-							chart.config.options.scales.x.max = data[data.length - 1][0] - baseDistance;
-							chart.update();
-
-							chartSection = section;
+							updateChart();
 						}
-
-						const annotation = chart.config.options.plugins.annotation.annotations.line;
-						annotation.xMin = annotation.xMax = distance - baseDistance;
-						chart.update();
 					} else {
 						document.getElementById('tracking-status').style.display = 'none';
 						document.getElementById('tracking-target').style.display = 'none';
@@ -5035,7 +5145,7 @@ map.on('load', function () {
 		}
 
 		if (trackingTeam && autoTrackingMode && now >= lastViewSwitch + 30000) {
-			if (now / 1000 > s - 33 && now / 1000 <= s) {
+			if (now > trips[trip].startTime - 33000 && now <= trips[trip].startTime) {
 				trackingMode = 'front';
 			} else {
 				trackingMode = trackingModes[Math.floor(Math.random() * (trackingModes.length - 2)) + 2];

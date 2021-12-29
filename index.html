@@ -11,6 +11,7 @@
 	<meta charset="utf-8" />
 	<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" />
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.css" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@7.4.1/swiper-bundle.min.css" />
 	<link rel="stylesheet" href="hakone-ekiden.css" />
 	<title>箱根駅伝 3D</title>
 	<meta name="description" content="A real-time 3D digital map of Hakone Ekiden. This data visualization was produced by Akihiko Kusanagi." />
@@ -30,6 +31,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/three@0.135.0/build/three.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/three@0.135.0/examples/js/loaders/GLTFLoader.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/three@0.135.0/examples/js/utils/SkeletonUtils.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/swiper@7.4.1/swiper-bundle.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@3.6.2/dist/chart.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.2.1/dist/chartjs-plugin-annotation.min.js"></script>
 </head>
@@ -57,10 +59,17 @@
 				</div>
 			</div>
 		</div>
-		<div id="panel" class="panel">
-			<div class="chart">
-				<canvas id="chart"></canvas>
+		<div id="panel" class="panel swiper">
+			<div class="swiper-wrapper">
+				<div class="swiper-slide">
+					<canvas id="chart-speed"></canvas>
+				</div>
+				<div class="swiper-slide">
+					<canvas id="chart-elevation"></canvas>
+				</div>
 			</div>
+			<div class="swiper-button-prev"></div>
+			<div class="swiper-button-next"></div>
 		</div>
 		<div id="views-bg" class="bg">
 			<div id="views" class="menu">
