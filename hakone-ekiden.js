@@ -4055,6 +4055,7 @@ const trips = [{
 	center: routes[1][0],
 	bearing: -50,
 	startTime: 1641164400000
+//	startTime: Date.now() + 10000
 }];
 
 const sections = [[
@@ -4444,7 +4445,7 @@ function updateChart() {
 			}
 			dataset.borderColor = i === trackingTeam ? 'rgb(0, 255, 0)' : 'rgba(0, 102, 0)';
 			dataset.borderWidth = i === trackingTeam ? 3 : 1;
-			dataset.label = `${teams[i].name} ${teams[i].runners[section]}`;
+			dataset.label = `${teams[i].name} ${teams[i].runners[trip * 5 + section]}`;
 			dataset.order = i === trackingTeam ? 0 : 1;
 		}
 		charts[0].config.options.plugins.title.text = `${trip * 5 + section + 1}区 ランナー速度`;
@@ -4735,7 +4736,6 @@ map.once('styledata', function () {
 
 			trackingTeam = i;
 			if (autoTrackingMode) {
-				trackingMode = trackingModes[Math.floor(Math.random() * (trackingModes.length - 2)) + 2];
 				lastViewSwitch = Date.now();
 			}
 			startTrackingAnimation();
@@ -4819,6 +4819,8 @@ map.once('styledata', function () {
 				borderColor: 'rgb(0, 127, 0)',
 				backgroundColor: 'rgb(0, 0, 0)',
 				borderWidth: 1,
+				borderCapStyle: 'round',
+				borderJoinStyle: 'round',
 				pointRadius: 0
 			}))
 		},
@@ -4900,6 +4902,9 @@ map.once('styledata', function () {
 				data: [],
 				fill: 'origin',
 				backgroundColor: 'rgba(0, 102, 255, 0.3)',
+				borderColor: 'rgba(51, 153, 255)',
+				borderCapStyle: 'round',
+				borderJoinStyle: 'round',
 				pointRadius: 0
 			}]
 		},
@@ -5002,7 +5007,7 @@ map.once('styledata', function () {
 							ts = now / 1000;
 						}
 
-						if (trip !== 0 || now > trips[0].startTime + 60000) {
+						if (now > trips[trip].startTime + 60000 || (trip === 1 && point !== result.points[1])) {
 							Object.assign(teams[id], {
 								lat,
 								lng,
@@ -5108,7 +5113,7 @@ map.once('styledata', function () {
 						team.object2.userData.actions[1].weight = 1;
 						team.object2.userData.duration = 40 / 24;
 						team.object2.visible = true;
-					} else if (section > 0 && section < 4 && distance - baseDistance <= 0.02) {
+					} else if (section > 0 && distance - baseDistance <= 0.02) {
 						const point4 = turf.along(routeFeature, baseDistance),
 							point5 = turf.along(routeFeature, baseDistance + 0.001),
 							bearing2 = turf.bearing(point4, point5),
