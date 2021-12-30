@@ -5176,7 +5176,7 @@ map.once('styledata', function () {
 					if (trackingTeam === i) {
 						document.getElementById('tracking-status').style.display = 'inline';
 						document.getElementById('tracking-target').style.display = 'table';
-						document.getElementById('tracking-marker').style.backgroundImage = `url('marker/${i}.png')`;
+						document.getElementById('tracking-marker').style.backgroundImage = `url('markers/${i}.png')`;
 						document.getElementById('tracking-team').innerText = teams[i].name;
 						document.getElementById('tracking-runner').innerText = teams[i].runners[trip * 5 + section];
 
