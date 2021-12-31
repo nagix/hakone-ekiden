@@ -10,14 +10,26 @@
     "bearing": 60,
     "pitch": 60,
     "sources": {
-        "mapbox://mapbox.satellite": {
-            "url": "mapbox://mapbox.satellite",
+        "satellite": {
             "type": "raster",
-            "tileSize": 256
+            "tiles": [
+                "https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg"
+            ],
+            "tileSize": 256,
+            "maxzoom": 18,
+            "minzoom": 2,
+            "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"
         },
-        "composite": {
-            "url": "mapbox://mapbox.mapbox-streets-v8",
+        "openmaptiles": {
+            "url": "https://tile.openstreetmap.jp/data/japan.json",
             "type": "vector"
+        },
+        "gsibv-vectortile-source-1-4-16": {
+            "type": "vector",
+            "tiles": ["https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/{z}/{x}/{y}.pbf"],
+            "maxzoom": 16,
+            "minzoom": 4,
+            "attribution": "<a href='https://maps.gsi.go.jp/vector/' target='_blank'>地理院地図Vector（仮称）</a>"
         },
         "10b512-7-113-50": {
             "type": "raster-dem",
@@ -37,6 +49,24 @@
             "tileSize": 512,
             "maxzoom": 13,
             "attribution": "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank'>地理院タイル</a>"
+        },
+        "building-extra": {
+            "type": "geojson",
+            "data": {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [139.7640599, 35.6874115],
+                            [139.7649901, 35.687258],
+                            [139.7648968, 35.6868851],
+                            [139.7639666, 35.6870386],
+                            [139.7640599, 35.6874115]
+                        ]
+                    ]
+                }
+            }
         }
     },
     "sprite": "mapbox://sprites/mapbox-map-design/ckhqrf2tz0dt119ny6azh975y/4snix0v8fnkivnb584t41dzcl",
@@ -63,12 +93,11 @@
             }
         },
         {
-            "id": "satellite-saturated",
+            "id": "satellite",
             "type": "raster",
-            "source": "mapbox://mapbox.satellite",
-            "layout": {},
+            "source": "satellite",
             "paint": {
-                "raster-saturation": 0.28,
+                "raster-contrast": 0.5,
                 "raster-brightness-max": 0.89,
                 "raster-fade-duration": 500
             }
@@ -76,7 +105,7 @@
         {
             "minzoom": 1,
             "type": "line",
-            "source": "composite",
+            "source": "openmaptiles",
             "id": "water-boundary-bg",
             "paint": {
                 "line-color": "hsla(0, 0%, 0%, 0.54)",
@@ -129,7 +158,7 @@
                 "line-cap": "round"
             },
             "type": "line",
-            "source": "composite",
+            "source": "openmaptiles",
             "id": "water-boundary",
             "paint": {
                 "line-color": "hsla(0, 0%, 100%, 0.54)",
@@ -150,30 +179,196 @@
             "source-layer": "water"
         },
         {
-            "id": "building-3d",
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 13,
+            "id": "buildings4302",
+            "metadata": {"name": "タンク"},
             "type": "fill-extrusion",
-            "source": "composite",
+            "source-layer": "structurea",
+            "filter": [
+                "all",
+                [
+                    "==",
+                    "ftCode",
+                    4302
+                ],
+                [
+                    "==",
+                    "$type",
+                    "Polygon"
+                ]
+            ],
+            "paint": {
+                "fill-extrusion-color": "rgb(255,230,190)",
+                "fill-extrusion-opacity": 0.8,
+                "fill-extrusion-height": 6
+            }
+        },
+        {
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 13,
+            "id": "buildings4301",
+            "metadata": {"name": "巨大構造物"},
+            "type": "fill-extrusion",
+            "source-layer": "structurea",
+            "filter": [
+                "all",
+                [
+                    "==",
+                    "ftCode",
+                    4301
+                ],
+                [
+                    "==",
+                    "$type",
+                    "Polygon"
+                ]
+            ],
+            "paint": {
+                "fill-extrusion-color": "rgb(255,230,190)",
+                "fill-extrusion-opacity": 0.8,
+                "fill-extrusion-height": 60
+            }
+        },
+        {
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 14,
+            "id": "buildings3111",
+            "metadata": {"name": "普通無壁舎"},
+            "type": "fill-extrusion",
             "source-layer": "building",
             "filter": [
-                "==",
+                "all",
                 [
-                    "get",
-                    "underground"
+                    "==",
+                    "ftCode",
+                    3111
                 ],
-                "false"
+                [
+                    "==",
+                    "$type",
+                    "Polygon"
+                ]
             ],
-            "minzoom": 14,
             "paint": {
-                "fill-extrusion-color": "rgba(220,217,214,1)",
-                "fill-extrusion-height": {
-                    "property": "height",
-                    "type": "identity"
-                },
-                "fill-extrusion-base": {
-                    "property": "min_height",
-                    "type": "identity"
-                },
-                "fill-extrusion-opacity": 0.8
+                "fill-extrusion-color": "rgb(255,230,190)",
+                "fill-extrusion-opacity": 0.8,
+                "fill-extrusion-height": 6
+            }
+        },
+        {
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 13,
+            "id": "buildings3112",
+            "metadata": {"name": "堅ろう無壁舎"},
+            "type": "fill-extrusion",
+            "source-layer": "building",
+            "filter": [
+                "all",
+                [
+                    "==",
+                    "ftCode",
+                    3112
+                ],
+                [
+                    "==",
+                    "$type",
+                    "Polygon"
+                ]
+            ],
+            "paint": {
+                "fill-extrusion-color": "rgb(230,230,230)",
+                "fill-extrusion-opacity": 0.8,
+                "fill-extrusion-height": 18
+            }
+        },
+        {
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 14,
+            "id": "buildings3101",
+            "metadata": {"name": "普通建物"},
+            "type": "fill-extrusion",
+            "source-layer": "building",
+            "filter": [
+                "all",
+                [
+                    "==",
+                    "ftCode",
+                    3101
+                ],
+                [
+                    "==",
+                    "$type",
+                    "Polygon"
+                ]
+            ],
+            "paint": {
+                "fill-extrusion-color": "rgb(255,230,190)",
+                "fill-extrusion-opacity": 0.8,
+                "fill-extrusion-height": 6
+            }
+        },
+        {
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 13,
+            "id": "buildings3102",
+            "metadata": {"name": "堅ろう建物"},
+            "type": "fill-extrusion",
+            "source-layer": "building",
+            "filter": [
+                "all",
+                [
+                    "==",
+                    "ftCode",
+                    3102
+                ],
+                [
+                    "==",
+                    "$type",
+                    "Polygon"
+                ]
+            ],
+            "paint": {
+                "fill-extrusion-color": "rgb(230,230,230)",
+                "fill-extrusion-opacity": 0.8,
+                "fill-extrusion-height": 18
+            }
+        },
+        {
+            "source": "gsibv-vectortile-source-1-4-16",
+            "minzoom": 13,
+            "id": "buildings3103",
+            "metadata": {"name": "高層建物"},
+            "type": "fill-extrusion",
+            "source-layer": "building",
+            "filter": [
+                "all",
+                [
+                    "==",
+                    "ftCode",
+                    3103
+                ],
+                [
+                    "==",
+                    "$type",
+                    "Polygon"
+                ]
+            ],
+            "paint": {
+                "fill-extrusion-color": "rgb(190,230,255)",
+                "fill-extrusion-opacity": 0.8,
+                "fill-extrusion-height": 60
+            }
+        },
+        {
+            "id": "building-3d",
+            "type": "fill-extrusion",
+            "source": "building-extra",
+            "minzoom": 13,
+            "paint": {
+                "fill-extrusion-color": "rgb(255,153,103)",
+                "fill-extrusion-opacity": 0.8,
+                "fill-extrusion-height": 60
             }
         },
         {
@@ -353,7 +548,7 @@
                 ]
             ],
             "type": "symbol",
-            "source": "composite",
+            "source": "openmaptiles",
             "id": "road-label-outdoors",
             "paint": {
                 "text-color": "hsl(0, 0%, 100%)",
@@ -373,7 +568,7 @@
                 "text-halo-width": 1,
                 "text-halo-blur": 1
             },
-            "source-layer": "road",
+            "source-layer": "transportation_name",
             "maxzoom": 18
         },
         {
@@ -459,12 +654,12 @@
                 ]
             ],
             "type": "symbol",
-            "source": "composite",
+            "source": "openmaptiles",
             "id": "road-intersection",
             "paint": {
                 "text-color": "rgb(67, 67, 67)"
             },
-            "source-layer": "road"
+            "source-layer": "transportation_name"
         },
         {
             "minzoom": 12,
@@ -546,7 +741,8 @@
                         "name"
                     ]
                 ],
-                "text-letter-spacing": 0.01
+                "text-letter-spacing": 0.01,
+                "visibility": "none"
             },
             "filter": [
                 "step",
@@ -581,7 +777,7 @@
                 ]
             ],
             "type": "symbol",
-            "source": "composite",
+            "source": "openmaptiles",
             "id": "path-pedestrian-label",
             "paint": {
                 "text-color": "hsl(0, 0%, 100%)",
@@ -589,7 +785,8 @@
                 "text-halo-width": 1,
                 "text-halo-blur": 1
             },
-            "source-layer": "road"
+            "source-layer": "transportation_name",
+            "maxzoom": 18
         },
         {
             "minzoom": 13,
@@ -679,19 +876,7 @@
                         "river",
                         "stream"
                     ],
-                    [
-                        "match",
-                        [
-                            "get",
-                            "worldview"
-                        ],
-                        [
-                            "all",
-                            "US"
-                        ],
-                        true,
-                        false
-                    ],
+                    true,
                     [
                         "disputed_canal",
                         "disputed_river",
@@ -707,19 +892,7 @@
                             ],
                             "true"
                         ],
-                        [
-                            "match",
-                            [
-                                "get",
-                                "worldview"
-                            ],
-                            [
-                                "all",
-                                "US"
-                            ],
-                            true,
-                            false
-                        ]
+                        true
                     ],
                     false
                 ],
@@ -732,7 +905,7 @@
                 ]
             ],
             "type": "symbol",
-            "source": "composite",
+            "source": "openmaptiles",
             "id": "waterway-label",
             "paint": {
                 "text-color": "hsl(196, 69%, 98%)",
@@ -740,7 +913,8 @@
                 "text-halo-width": 1,
                 "text-halo-blur": 1
             },
-            "source-layer": "natural_label"
+            "source-layer": "waterway",
+            "maxzoom": 18
         },
         {
             "minzoom": 4,
@@ -829,19 +1003,7 @@
                         "glacier",
                         "landform"
                     ],
-                    [
-                        "match",
-                        [
-                            "get",
-                            "worldview"
-                        ],
-                        [
-                            "all",
-                            "US"
-                        ],
-                        true,
-                        false
-                    ],
+                    true,
                     [
                         "disputed_glacier",
                         "disputed_landform"
@@ -856,19 +1018,7 @@
                             ],
                             "true"
                         ],
-                        [
-                            "match",
-                            [
-                                "get",
-                                "worldview"
-                            ],
-                            [
-                                "all",
-                                "US"
-                            ],
-                            true,
-                            false
-                        ]
+                        true
                     ],
                     false
                 ],
@@ -889,7 +1039,7 @@
                 ]
             ],
             "type": "symbol",
-            "source": "composite",
+            "source": "openmaptiles",
             "id": "natural-line-label",
             "paint": {
                 "text-halo-width": 0.5,
@@ -923,7 +1073,7 @@
                     ]
                 ]
             },
-            "source-layer": "natural_label"
+            "source-layer": "landcover"
         },
         {
             "minzoom": 4,
@@ -1113,19 +1263,7 @@
                         "water_feature",
                         "wetland"
                     ],
-                    [
-                        "match",
-                        [
-                            "get",
-                            "worldview"
-                        ],
-                        [
-                            "all",
-                            "US"
-                        ],
-                        true,
-                        false
-                    ],
+                    true,
                     [
                         "disputed_dock",
                         "disputed_glacier",
@@ -1143,19 +1281,7 @@
                             ],
                             "true"
                         ],
-                        [
-                            "match",
-                            [
-                                "get",
-                                "worldview"
-                            ],
-                            [
-                                "all",
-                                "US"
-                            ],
-                            true,
-                            false
-                        ]
+                        true
                     ],
                     false
                 ],
@@ -1176,7 +1302,7 @@
                 ]
             ],
             "type": "symbol",
-            "source": "composite",
+            "source": "openmaptiles",
             "id": "natural-point-label",
             "paint": {
                 "icon-opacity": [
@@ -1237,13 +1363,13 @@
                     ]
                 ]
             },
-            "source-layer": "natural_label"
+            "source-layer": "water"
         },
         {
             "id": "water-line-label",
             "type": "symbol",
-            "source": "composite",
-            "source-layer": "natural_label",
+            "source": "openmaptiles",
+            "source-layer": "water",
             "filter": [
                 "all",
                 [
@@ -1259,19 +1385,7 @@
                         "sea",
                         "water"
                     ],
-                    [
-                        "match",
-                        [
-                            "get",
-                            "worldview"
-                        ],
-                        [
-                            "all",
-                            "US"
-                        ],
-                        true,
-                        false
-                    ],
+                    true,
                     [
                         "disputed_bay",
                         "disputed_ocean",
@@ -1289,19 +1403,7 @@
                             ],
                             "true"
                         ],
-                        [
-                            "match",
-                            [
-                                "get",
-                                "worldview"
-                            ],
-                            [
-                                "all",
-                                "US"
-                            ],
-                            true,
-                            false
-                        ]
+                        true
                     ],
                     false
                 ],
@@ -1438,8 +1540,8 @@
         {
             "id": "water-point-label",
             "type": "symbol",
-            "source": "composite",
-            "source-layer": "natural_label",
+            "source": "openmaptiles",
+            "source-layer": "water",
             "filter": [
                 "all",
                 [
@@ -1455,19 +1557,7 @@
                         "sea",
                         "water"
                     ],
-                    [
-                        "match",
-                        [
-                            "get",
-                            "worldview"
-                        ],
-                        [
-                            "all",
-                            "US"
-                        ],
-                        true,
-                        false
-                    ],
+                    true,
                     [
                         "disputed_bay",
                         "disputed_ocean",
@@ -1485,19 +1575,7 @@
                             ],
                             "true"
                         ],
-                        [
-                            "match",
-                            [
-                                "get",
-                                "worldview"
-                            ],
-                            [
-                                "all",
-                                "US"
-                            ],
-                            true,
-                            false
-                        ]
+                        true
                     ],
                     false
                 ],
@@ -1851,71 +1929,30 @@
                 ]
             },
             "filter": [
-                "let",
-                "densityByClass",
+                "match",
                 [
-                    "match",
-                    [
-                        "get",
-                        "class"
-                    ],
-                    "landmark",
-                    3,
-                    "lodging",
-                    2,
-                    "medical",
-                    1,
-                    "park_like",
-                    4,
-                    "public_facilities",
-                    1,
-                    "sport_and_leisure",
-                    4,
-                    0
+                    "get",
+                    "class"
                 ],
                 [
-                    "<=",
-                    [
-                        "get",
-                        "filterrank"
-                    ],
-                    [
-                        "case",
-                        [
-                            "<",
-                            0,
-                            [
-                                "var",
-                                "densityByClass"
-                            ]
-                        ],
-                        [
-                            "+",
-                            [
-                                "step",
-                                [
-                                    "zoom"
-                                ],
-                                0,
-                                16,
-                                1,
-                                17,
-                                2
-                            ],
-                            [
-                                "var",
-                                "densityByClass"
-                            ]
-                        ],
-                        [
-                            "var",
-                            "densityByClass"
-                        ]
-                    ]
-                ]
+                    "town_hall",
+                    "golf",
+                    "park",
+                    "railway",
+                    "aerialway",
+                    "college",
+                    "lodging",
+                    "school",
+                    "harbor",
+                    "hospital",
+                    "stadium",
+                    "castle"
+                ],
+                true,
+                false
             ],
             "type": "symbol",
-            "source": "composite",
+            "source": "openmaptiles",
             "id": "poi-label",
             "paint": {
                 "icon-opacity": [
@@ -1951,7 +1988,7 @@
                         "get",
                         "class"
                     ],
-                    "park_like",
+                    "park",
                     "hsl(94, 100%, 0%)",
                     "education",
                     "hsl(0, 5%, 0%)",
@@ -1961,79 +1998,9 @@
                 ],
                 "text-halo-width": 0.5,
                 "text-halo-blur": 0.5,
-                "text-color": [
-                    "step",
-                    [
-                        "zoom"
-                    ],
-                    [
-                        "step",
-                        [
-                            "get",
-                            "sizerank"
-                        ],
-                        [
-                            "match",
-                            [
-                                "get",
-                                "class"
-                            ],
-                            "food_and_drink",
-                            "hsl(356, 0%, 100%)",
-                            "park_like",
-                            "hsl(141, 71%, 100%)",
-                            "hsl(0, 0%, 100%)"
-                        ],
-                        5,
-                        [
-                            "match",
-                            [
-                                "get",
-                                "class"
-                            ],
-                            "food_and_drink",
-                            "hsl(356, 0%, 100%)",
-                            "park_like",
-                            "hsl(141, 70%, 89%)",
-                            "hsl(0, 0%, 100%)"
-                        ]
-                    ],
-                    17,
-                    [
-                        "step",
-                        [
-                            "get",
-                            "sizerank"
-                        ],
-                        [
-                            "match",
-                            [
-                                "get",
-                                "class"
-                            ],
-                            "food_and_drink",
-                            "hsl(356, 0%, 100%)",
-                            "park_like",
-                            "hsl(141, 71%, 100%)",
-                            "hsl(0, 0%, 100%)"
-                        ],
-                        13,
-                        [
-                            "match",
-                            [
-                                "get",
-                                "class"
-                            ],
-                            "food_and_drink",
-                            "hsl(356, 0%, 100%)",
-                            "park_like",
-                            "hsl(141, 70%, 89%)",
-                            "hsl(0, 0%, 100%)"
-                        ]
-                    ]
-                ]
+                "text-color": "hsl(0, 0%, 100%)"
             },
-            "source-layer": "poi_label"
+            "source-layer": "poi"
         },
         {
             "minzoom": 8,
@@ -2107,19 +2074,7 @@
                     "military",
                     "civil"
                 ],
-                [
-                    "match",
-                    [
-                        "get",
-                        "worldview"
-                    ],
-                    [
-                        "all",
-                        "US"
-                    ],
-                    true,
-                    false
-                ],
+                true,
                 [
                     "disputed_military",
                     "disputed_civil"
@@ -2134,359 +2089,19 @@
                         ],
                         "true"
                     ],
-                    [
-                        "match",
-                        [
-                            "get",
-                            "worldview"
-                        ],
-                        [
-                            "all",
-                            "US"
-                        ],
-                        true,
-                        false
-                    ]
+                    true
                 ],
                 false
             ],
             "type": "symbol",
-            "source": "composite",
+            "source": "openmaptiles",
             "id": "airport-label",
             "paint": {
                 "text-color": "hsl(0, 0%, 100%)",
                 "text-halo-color": "hsl(0, 20%, 3%)",
                 "text-halo-width": 1
             },
-            "source-layer": "airport_label"
-        },
-        {
-            "minzoom": 3,
-            "layout": {
-                "text-size": [
-                    "interpolate",
-                    [
-                        "cubic-bezier",
-                        0.85,
-                        0.7,
-                        0.65,
-                        1
-                    ],
-                    [
-                        "zoom"
-                    ],
-                    4,
-                    [
-                        "step",
-                        [
-                            "get",
-                            "symbolrank"
-                        ],
-                        10,
-                        6,
-                        9.5,
-                        7,
-                        9
-                    ],
-                    9,
-                    [
-                        "step",
-                        [
-                            "get",
-                            "symbolrank"
-                        ],
-                        21,
-                        6,
-                        16,
-                        7,
-                        13
-                    ]
-                ],
-                "text-transform": "uppercase",
-                "text-font": [
-                    "DIN Pro Bold",
-                    "Arial Unicode MS Bold"
-                ],
-                "text-field": [
-                    "coalesce",
-                    [
-                        "get",
-                        "name"
-                    ],
-                    [
-                        "get",
-                        "name"
-                    ]
-                ],
-                "text-letter-spacing": 0.15,
-                "text-max-width": 6
-            },
-            "maxzoom": 9,
-            "filter": [
-                "match",
-                [
-                    "get",
-                    "class"
-                ],
-                "state",
-                [
-                    "match",
-                    [
-                        "get",
-                        "worldview"
-                    ],
-                    [
-                        "all",
-                        "US"
-                    ],
-                    true,
-                    false
-                ],
-                "disputed_state",
-                [
-                    "all",
-                    [
-                        "==",
-                        [
-                            "get",
-                            "disputed"
-                        ],
-                        "true"
-                    ],
-                    [
-                        "match",
-                        [
-                            "get",
-                            "worldview"
-                        ],
-                        [
-                            "all",
-                            "US"
-                        ],
-                        true,
-                        false
-                    ]
-                ],
-                false
-            ],
-            "type": "symbol",
-            "source": "composite",
-            "id": "state-label",
-            "paint": {
-                "text-color": "hsl(0, 0%, 95%)",
-                "text-halo-color": "rgb(0, 0, 0)",
-                "text-halo-width": 1
-            },
-            "source-layer": "place_label"
-        },
-        {
-            "minzoom": 1,
-            "layout": {
-                "icon-image": "",
-                "text-field": [
-                    "coalesce",
-                    [
-                        "get",
-                        [
-                            "match",
-                            [
-                                "get",
-                                "name_script"
-                            ],
-                            [
-                                "Myanmar",
-                                "Khmer",
-                                "Tibetan",
-                                "Lao",
-                                "Bengali",
-                                "Thai",
-                                "Ethiopic",
-                                "Devanagari",
-                                "Gujarati",
-                                "Gurmukhi",
-                                "Kannada",
-                                "Malayalam",
-                                "Oriya",
-                                "Sinhala",
-                                "Tamil",
-                                "Telugu"
-                            ],
-                            "name_en",
-                            "name"
-                        ]
-                    ],
-                    [
-                        "get",
-                        "name"
-                    ]
-                ],
-                "text-line-height": 1.1,
-                "text-max-width": 6,
-                "text-font": [
-                    "DIN Pro Medium",
-                    "Arial Unicode MS Regular"
-                ],
-                "text-offset": [
-                    "literal",
-                    [
-                        0,
-                        0
-                    ]
-                ],
-                "text-justify": [
-                    "step",
-                    [
-                        "zoom"
-                    ],
-                    [
-                        "match",
-                        [
-                            "get",
-                            "text_anchor"
-                        ],
-                        [
-                            "left",
-                            "bottom-left",
-                            "top-left"
-                        ],
-                        "left",
-                        [
-                            "right",
-                            "bottom-right",
-                            "top-right"
-                        ],
-                        "right",
-                        "center"
-                    ],
-                    7,
-                    "center"
-                ],
-                "text-size": [
-                    "interpolate",
-                    [
-                        "cubic-bezier",
-                        0.2,
-                        0,
-                        0.7,
-                        1
-                    ],
-                    [
-                        "zoom"
-                    ],
-                    1,
-                    [
-                        "step",
-                        [
-                            "get",
-                            "symbolrank"
-                        ],
-                        11,
-                        4,
-                        9,
-                        5,
-                        8
-                    ],
-                    9,
-                    [
-                        "step",
-                        [
-                            "get",
-                            "symbolrank"
-                        ],
-                        22,
-                        4,
-                        19,
-                        5,
-                        17
-                    ]
-                ]
-            },
-            "maxzoom": 10,
-            "filter": [
-                "match",
-                [
-                    "get",
-                    "class"
-                ],
-                "country",
-                [
-                    "match",
-                    [
-                        "get",
-                        "worldview"
-                    ],
-                    [
-                        "all",
-                        "US"
-                    ],
-                    true,
-                    false
-                ],
-                "disputed_country",
-                [
-                    "all",
-                    [
-                        "==",
-                        [
-                            "get",
-                            "disputed"
-                        ],
-                        "true"
-                    ],
-                    [
-                        "match",
-                        [
-                            "get",
-                            "worldview"
-                        ],
-                        [
-                            "all",
-                            "US"
-                        ],
-                        true,
-                        false
-                    ]
-                ],
-                false
-            ],
-            "type": "symbol",
-            "source": "composite",
-            "id": "country-label",
-            "paint": {
-                "icon-opacity": [
-                    "step",
-                    [
-                        "zoom"
-                    ],
-                    [
-                        "case",
-                        [
-                            "has",
-                            "text_anchor"
-                        ],
-                        1,
-                        0
-                    ],
-                    7,
-                    0
-                ],
-                "text-color": "hsl(0, 0%, 95%)",
-                "text-halo-color": [
-                    "interpolate",
-                    [
-                        "linear"
-                    ],
-                    [
-                        "zoom"
-                    ],
-                    2,
-                    "rgba(0, 0, 0, 0.75)",
-                    3,
-                    "rgb(0, 0, 0)"
-                ],
-                "text-halo-width": 1.25
-            },
-            "source-layer": "place_label"
+            "source-layer": "aerodrome_label"
         }
     ],
     "terrain": {

@@ -4049,7 +4049,7 @@ const trips = [{
 	center: routes[0][0],
 	bearing: 95,
 	startTime: 1641078000000
-//	startTime: Date.now() + 10000
+//	startTime: Date.now() - 4.6*60*60*1000
 }, {
 	name: '復路',
 	center: routes[1][0],
@@ -4186,18 +4186,204 @@ const SQRT3 = Math.sqrt(3);
 const trip = 0;
 const routeFeature = turf.lineString(routes[trip]);
 
-let modelOrigin = mapboxgl.MercatorCoordinate.fromLngLat(routes[trip][0]);
-let modelScale = modelOrigin.meterInMercatorCoordinateUnits();
+for (const team of teams) {
+	team.distance = 0;
+	team.speed = 20 - Math.random() * 0.6;
+	team.ts = trips[trip].startTime / 1000;
+	team.speedHistory = [{d: [], s: []}, {d: [], s: []}];
+	team.offset = Math.random() * 6 - 3;
+}
+
+let modelOrigin;
+let modelScale;
 
 let trackingTeam;
 let trackingMode = 'front';
 let autoTrackingMode = true;
 let lastViewSwitch = Date.now();
 let trackingAnimationID;
-let swiper;
 let chartSection;
 let leadingTeam = 1;
 let maxDistance = 0;
+
+class MapboxGLButtonControl {
+
+	constructor(optionArray) {
+		this._options = optionArray.map(options => ({
+			className: options.className || '',
+			title: options.title || '',
+			eventHandler: options.eventHandler
+		}));
+	}
+
+	onAdd(map) {
+		const me = this;
+
+		me._map = map;
+
+		me._container = document.createElement('div');
+		me._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
+
+		me._buttons = me._options.map(options => {
+			const button = document.createElement('button'),
+				icon = document.createElement('span'),
+				{className, title, eventHandler} = options;
+
+			button.className = className;
+			button.type = 'button';
+			button.title = title;
+			button.setAttribute('aria-label', title);
+			button.onclick = eventHandler;
+
+			icon.className = 'mapboxgl-ctrl-icon';
+			icon.setAttribute('aria-hidden', true);
+			button.appendChild(icon);
+
+			me._container.appendChild(button);
+
+			return button;
+		});
+
+		return me._container;
+	}
+
+	onRemove() {
+		const me = this;
+
+		me._container.parentNode.removeChild(me._container);
+		me._map = undefined;
+	}
+
+}
+
+class RunnerLayer {
+
+	constructor(options) {
+		const me = this;
+
+		me.id = options.id;
+		me.type = 'custom';
+		me.renderingMode = '3d';
+	}
+
+	onAdd(map, gl) {
+		const me = this,
+			// {_fov, width, height} = map.transform,
+			gltfLoader = new THREE.GLTFLoader(),
+			textureLoader = new THREE.TextureLoader(),
+			renderer = me.renderer = new THREE.WebGLRenderer({
+				canvas: map.getCanvas(),
+				context: gl
+			}),
+			scene = me.scene = new THREE.Scene(),
+			light = me.light = new THREE.DirectionalLight(0xffffff, .8),
+			ambientLight = me.ambientLight = new THREE.AmbientLight(0xffffff, .4);
+
+		renderer.outputEncoding = THREE.sRGBEncoding;
+		renderer.autoClear = false;
+
+		scene.add(light);
+		scene.add(ambientLight);
+
+		// This is needed to avoid a black screen with empty scene
+		// scene.add(new Mesh());
+
+		gltfLoader.load('runner.glb', gltf => {
+			const mesh = gltf.scene;
+
+			mesh.position.x = 0;
+			mesh.position.y = 0;
+			mesh.position.z = 0;
+			mesh.rotation.x = Math.PI / 2;
+			mesh.rotation.y = Math.PI;
+			mesh.rotation.z = 0;
+
+			for (let i = 1; i < teams.length; i++) {
+				const team = teams[i],
+					object = THREE.SkeletonUtils.clone(mesh);
+
+				const texture = textureLoader.load(`textures/${i}.png`);
+				texture.encoding = THREE.sRGBEncoding;
+				texture.flipY = false;
+				const material = new THREE.MeshPhongMaterial({
+					map: texture,
+					transparent: true
+				});
+				object.traverse(child => {
+					if (child.isMesh) {
+						child.material = material;
+					}
+				});
+
+				team.object = new THREE.Object3D();
+				team.object.scale.x = modelScale * 5;
+				team.object.scale.y = modelScale * 5;
+				team.object.scale.z = modelScale * 5;
+				team.object.add(object);
+
+				team.object2 = THREE.SkeletonUtils.clone(team.object);
+
+				scene.add(team.object);
+
+				team.object.userData.mixer = new THREE.AnimationMixer(team.object);
+				team.object.userData.mixer.clipAction(gltf.animations[2]).play();
+
+				scene.add(team.object2);
+
+				team.object2.userData.mixer = new THREE.AnimationMixer(team.object2);
+				team.object2.userData.actions = gltf.animations.slice(2, 4).map(
+					clip => team.object2.userData.mixer.clipAction(clip).play()
+				);
+				team.object2.userData.duration = 20 / 24;
+			}
+
+
+			const animate = () => {
+				for (let i = 1; i < teams.length; i++) {
+					const {object, object2} = teams[i],
+						duration = 20 / 24,
+						duration2 = object2.userData.duration;
+
+					if (object) {
+						object.userData.mixer.setTime((performance.now() / 750 + i / teams.length * duration) % duration);
+					}
+					if (object2) {
+						object2.userData.mixer.setTime((performance.now() / 750 + i / teams.length * duration2) % duration2);
+					}
+				}
+				requestAnimationFrame(animate);
+			};
+
+			animate();
+		});
+
+		me.map = map;
+		me.camera = new THREE.Camera();
+
+		/*map.on('resize', event => {
+			const {width, height} = event.target.transform;
+
+			me.camera.aspect = width / height;
+			me.camera.updateProjectionMatrix();
+		});*/
+	}
+
+	render(gl, matrix) {
+		const me = this,
+			m = new THREE.Matrix4().fromArray(matrix),
+			l = new THREE.Matrix4()
+				.makeTranslation(modelOrigin.x, modelOrigin.y, modelOrigin.z)
+				.scale(new THREE.Vector3(1, -1, 1)),
+			rad = THREE.MathUtils.degToRad(me.map.getBearing() + 30);
+
+		me.camera.projectionMatrix = m.multiply(l);
+		me.light.position.set(-Math.sin(rad), -Math.cos(rad), SQRT3).normalize();
+		me.renderer.resetState();
+		me.renderer.render(me.scene, me.camera);
+		me.map.triggerRepaint();
+	}
+
+}
 
 function clamp(value, lower, upper) {
 	return Math.min(Math.max(value, lower), upper);
@@ -4386,7 +4572,7 @@ function jumpTo(options) {
 		pitch = currentPitch + (pitch - currentPitch) * factor;
 	}
 
-	map.jumpTo({center, zoom, bearing, pitch});
+	map.jumpTo({center, zoom, bearing, pitch}, {auto: true});
 
 	// Workaround for the issue of the scroll zoom during tracking
 	if (scrollZooming) {
@@ -4405,7 +4591,7 @@ function startTrackingAnimation() {
 	const start = performance.now();
 	let t2 = 0;
 
-	function animate() {
+	const animate = () => {
 		const elapsed = Math.min(performance.now() - start, 3000),
 			t1 = easeOutQuart(elapsed / 3000),
 			factor = 1 - (1 - t1) / (1 - t2),
@@ -4424,7 +4610,7 @@ function startTrackingAnimation() {
 		} else {
 			trackingAnimationID = requestAnimationFrame(animate);
 		}
-	}
+	};
 
 	stopTrackingAnimation();
 	updateTrackingParams();
@@ -4482,12 +4668,59 @@ function updateChart() {
 	charts[swiper.activeIndex].update();
 }
 
+function setInteractions(enable) {
+	for (const handler of ['scrollZoom', 'boxZoom', 'dragRotate', 'dragPan', 'keyboard', 'doubleClickZoom', 'touchZoomRotate']) {
+		if (enable) {
+			map[handler].enable();
+		} else {
+			map[handler].disable();
+		}
+	}
+}
+
+function updateModelOrigin(lngLat) {
+	const elevation = map.queryTerrainElevation(lngLat);
+
+	modelOrigin = mapboxgl.MercatorCoordinate.fromLngLat(lngLat, elevation);
+	modelScale = modelOrigin.meterInMercatorCoordinateUnits();
+}
+
+const panelElement = document.getElementById('panel');
+
+function showPanel() {
+	panelElement.style.bottom = 0;
+}
+
+function hidePanel() {
+	panelElement.style.bottom = 'min(-25%, -150px)';
+}
+
+const trackingStatusElement = document.getElementById('tracking-status');
+const trackingInfoElement = document.getElementById('tracking-info');
+
+function showTrackingInfo() {
+	trackingStatusElement.style.display = 'inline';
+	trackingInfoElement.style.display = 'table';
+}
+
+function hideTrackingInfo() {
+	trackingStatusElement.style.display = 'none';
+	trackingInfoElement.style.display = 'none';
+}
+
+const trackingMarkerElement = document.getElementById('tracking-marker');
+const trackingTeamTextElement = document.getElementById('tracking-team');
+const trackingRunnerTextElement = document.getElementById('tracking-runner');
+
+const viewsBGElement = document.getElementById('views-bg');
+const infoBGElement = document.getElementById('info-bg');
+
 Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.2)';
 Chart.defaults.color = '#fff';
 
-const osm = location.search.match(/osm/);
-const styleFile = osm ? 'style-osm.json' : 'style.json';
-const buildingLayerId = osm ? 'buildings4302' : 'building-3d';
+const mapbox = location.search.match(/mapbox/);
+const styleFile = mapbox ? 'style-mapbox.json' : 'style.json';
+const buildingLayerId = mapbox ? 'building-3d' : 'buildings4302';
 const autoPaging = location.search.match(/auto/);
 
 mapboxgl.accessToken = 'pk.eyJ1IjoibmFnaXgiLCJhIjoiY2tqZXZ1MjQ0MGE3MDJ6bzc2cmNyaWlrOSJ9.QjrikO3RTE20AMURILSTWg';
@@ -4500,56 +4733,238 @@ const map = new mapboxgl.Map({
 	pitch: 80
 });
 
-map.once('styledata', function () {
-	map.addControl(new mapboxgl.NavigationControl());
-	map.addControl(new mapboxgl.FullscreenControl({container: document.getElementById('map')}));
-	map.addControl(new MapboxGLButtonControl([{
-		className: 'mapboxgl-ctrl-camera',
-		title: 'カメラ切り替え',
-		eventHandler() {
-			document.getElementById('views-bg').style.display = 'block';
-		}
-	}, {
-		className: 'mapboxgl-ctrl-info',
-		title: '箱根駅伝 3D について',
-		eventHandler() {
-			document.getElementById('info-bg').style.display = 'block';
-		}
-	}]));
-
-	document.getElementById('views-bg').addEventListener('click', () => {
-		document.getElementById('views-bg').style.display = 'none';
-	});
-
-	for (const mode of trackingModes) {
-		const e = document.getElementById(`${mode}-view`);
-		e.addEventListener('click', e => {
-			const active = document.querySelector('.menu div.active').classList;
-			if (active) {
-				active.remove('active');
-			}
-			e.target.classList.add('active');
-
-			if (mode === 'auto') {
-				autoTrackingMode = true;
-			} else {
-				trackingMode = mode;
-				autoTrackingMode = false;
-			}
-			if (trackingTeam) {
-				if (autoTrackingMode) {
-					trackingMode = trackingModes[Math.floor(Math.random() * (trackingModes.length - 2)) + 2];
-					lastViewSwitch = Date.now();
-				}
-				startTrackingAnimation();
-			}
-		});
+// Workaround to update pitch using constraints
+const {get: getPitch, set: setPitch} = Object.getOwnPropertyDescriptor(map.transform.constructor.prototype, 'pitch');
+Object.defineProperty(map.transform, 'pitch', {
+	get: getPitch,
+	set: function(pitch) {
+		setPitch.call(this, pitch);
+		this._constrain();
+		this._calcMatrices();
 	}
+});
 
-	document.getElementById('info-bg').addEventListener('click', () => {
-		document.getElementById('info-bg').style.display = 'none';
+const canvasElement = document.querySelector('#map .mapboxgl-canvas');
+const tripTextElement = document.getElementById('trip');
+const sectionTextElement = document.getElementById('section');
+const distanceTextElement = document.getElementById('distance');
+const distanceBarElement = document.getElementById('progress');
+
+map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}));
+map.addControl(new mapboxgl.FullscreenControl());
+map.addControl(new MapboxGLButtonControl([{
+	className: 'mapboxgl-ctrl-camera',
+	title: 'カメラ切り替え',
+	eventHandler() {
+		viewsBGElement.style.display = 'block';
+	}
+}, {
+	className: 'mapboxgl-ctrl-info',
+	title: '箱根駅伝 3D について',
+	eventHandler() {
+		infoBGElement.style.display = 'block';
+	}
+}]));
+
+viewsBGElement.addEventListener('click', () => {
+	viewsBGElement.style.display = 'none';
+	canvasElement.focus();
+});
+
+for (const mode of trackingModes) {
+	const element = document.getElementById(`${mode}-view`);
+
+	element.addEventListener('click', () => {
+		document.querySelector('.menu div.active').classList.remove('active');
+		element.classList.add('active');
+
+		if (mode === 'auto') {
+			autoTrackingMode = true;
+		} else {
+			trackingMode = mode;
+			autoTrackingMode = false;
+		}
+		if (trackingTeam) {
+			if (autoTrackingMode) {
+				trackingMode = trackingModes[Math.floor(Math.random() * (trackingModes.length - 2)) + 2];
+				lastViewSwitch = Date.now();
+			}
+			startTrackingAnimation();
+		}
+		canvasElement.focus();
 	});
+}
 
+infoBGElement.addEventListener('click', () => {
+	infoBGElement.style.display = 'none';
+	canvasElement.focus();
+});
+
+const swiper = new Swiper('.swiper', {
+	navigation: {
+		nextEl: '.swiper-button-next',
+		prevEl: '.swiper-button-prev'
+	}
+});
+swiper.on('slideChange', updateChart);
+
+charts[0] = new Chart('chart-speed', {
+	type: 'line',
+	data: {
+		datasets: teams.slice(1).map(team => ({
+			label: '',
+			data: [],
+			borderColor: 'rgb(0, 127, 0)',
+			backgroundColor: 'rgb(0, 0, 0)',
+			borderWidth: 1,
+			borderCapStyle: 'round',
+			borderJoinStyle: 'round',
+			pointRadius: 0
+		}))
+	},
+	options: {
+		maintainAspectRatio: false,
+		layout: {
+			padding: {
+				left: 40,
+				top: 5,
+				right: 50,
+				bottom: 10
+			}
+		},
+		scales: {
+			x: {
+				type: 'linear',
+				min: 0,
+				grid: {
+					tickLength: 0
+				}
+			},
+			y: {
+				grid: {
+					tickLength: 0
+				}
+			}
+		},
+		interaction: {
+			mode: 'nearest',
+			intersect: false
+		},
+		animation: false,
+		plugins: {
+			title: {
+				text: '',
+				display: true
+			},
+			legend: {
+				display: false
+			},
+			tooltip: {
+				callbacks: {
+					title: context => `距離 ${context[0].parsed.x.toFixed(2)} km`,
+					label: context => `${context.dataset.label} ${context.parsed.y} km/s`
+				}
+			},
+			annotation: {
+				annotations: {
+					position: {
+						type: 'line',
+						borderColor: 'rgb(255, 0, 0)',
+						xMin: 0,
+						xMax: 0
+					},
+					record: {
+						type: 'line',
+						borderColor: 'rgb(255, 153, 0)',
+						yMin: 0,
+						yMax: 0,
+						label: {
+							content: '区間新',
+							enabled: true,
+							color: 'rgb(0, 0, 0)',
+							backgroundColor: 'rgba(255, 153, 0)',
+							position: '80%'
+						},
+						drawTime: 'beforeDatasetsDraw'
+					}
+				}
+			}
+		}
+	}
+});
+
+charts[1] = new Chart('chart-elevation', {
+	type: 'line',
+	data: {
+		datasets: [{
+			data: [],
+			fill: 'origin',
+			backgroundColor: 'rgba(0, 102, 255, 0.3)',
+			borderColor: 'rgba(51, 153, 255)',
+			borderCapStyle: 'round',
+			borderJoinStyle: 'round',
+			pointRadius: 0
+		}]
+	},
+	options: {
+		maintainAspectRatio: false,
+		layout: {
+			padding: {
+				left: 40,
+				top: 5,
+				right: 50,
+				bottom: 10
+			}
+		},
+		scales: {
+			x: {
+				type: 'linear',
+				min: 0,
+				grid: {
+					tickLength: 0
+				}
+			},
+			y: {
+				min: 0,
+				grid: {
+					tickLength: 0
+				}
+			}
+		},
+		interaction: {
+			mode: 'nearest',
+			intersect: false
+		},
+		animation: false,
+		plugins: {
+			title: {
+				text: '',
+				display: true
+			},
+			legend: {
+				display: false
+			},
+			tooltip: {
+				callbacks: {
+					title: context => `距離 ${context[0].parsed.x.toFixed(2)} km`,
+					label: context => `標高 ${context.parsed.y} m`
+				}
+			},
+			annotation: {
+				annotations: {
+					position: {
+						type: 'line',
+						borderColor: 'rgb(255, 0, 0)',
+						xMin: 0,
+						xMax: 0
+					}
+				}
+			}
+		}
+	}
+});
+
+map.once('styledata', () => {
 	map.addSource('route', {
 		type: 'geojson',
 		data: {
@@ -4563,139 +4978,22 @@ map.once('styledata', function () {
 	});
 
 	map.addLayer({
-		'id': 'route',
-		'type': 'line',
-		'source': 'route',
-		'layout': {
+		id: 'route',
+		type: 'line',
+		source: 'route',
+		layout: {
 			'line-join': 'round',
 			'line-cap': 'round'
 		},
-		'paint': {
+		paint: {
 			'line-color': 'rgba(255, 255, 0, 0.5)',
 			'line-width': 4
 		}
 	});
 
-	map.addLayer({
-		id: 'runners',
-		type: 'custom',
-		renderingMode: '3d',
-		onAdd: (map, gl) => {
-			const me = this,
-				{_fov, width, height} = map.transform,
-				renderer = me.renderer = new THREE.WebGLRenderer({
-					canvas: map.getCanvas(),
-					context: gl
-				}),
-				scene = me.scene = new THREE.Scene(),
-				light = me.light = new THREE.DirectionalLight(0xffffff, .8),
-				ambientLight = me.ambientLight = new THREE.AmbientLight(0xffffff, .4);
+	updateModelOrigin(map.getCenter());
 
-			renderer.outputEncoding = THREE.sRGBEncoding;
-			renderer.autoClear = false;
-
-			scene.add(light);
-			scene.add(ambientLight);
-
-			// This is needed to avoid a black screen with empty scene
-			// scene.add(new Mesh());
-
-			const gltfLoader = new THREE.GLTFLoader();
-			const textureLoader = new THREE.TextureLoader();
-			gltfLoader.load('runner.glb', gltf => {
-				const mesh = gltf.scene;
-
-				mesh.position.x = 0;
-				mesh.position.y = 0;
-				mesh.position.z = 0;
-				mesh.rotation.x = Math.PI / 2;
-				mesh.rotation.y = Math.PI;
-				mesh.rotation.z = 0;
-
-				for (let i = 1; i < teams.length; i++) {
-					const team = teams[i],
-						object = THREE.SkeletonUtils.clone(mesh);
-
-					const texture = textureLoader.load(`textures/${i}.png`);
-					texture.encoding = THREE.sRGBEncoding;
-					texture.flipY = false;
-					const material = new THREE.MeshPhongMaterial({
-						map: texture,
-						transparent: true
-					});
-					object.traverse(child => {
-						if (child.isMesh) {
-							child.material = material;
-						}
-					});
-
-					team.object = new THREE.Object3D();
-					team.object.scale.x = modelScale * 5;
-					team.object.scale.y = modelScale * 5;
-					team.object.scale.z = modelScale * 5;
-					team.object.add(object);
-
-					team.object2 = THREE.SkeletonUtils.clone(team.object);
-
-					scene.add(team.object);
-
-					team.object.userData.mixer = new THREE.AnimationMixer(team.object);
-					team.object.userData.mixer.clipAction(gltf.animations[2]).play();
-
-					scene.add(team.object2);
-
-					team.object2.userData.mixer = new THREE.AnimationMixer(team.object2);
-					team.object2.userData.actions = gltf.animations.slice(2, 4).map(
-						clip => team.object2.userData.mixer.clipAction(clip).play()
-					);
-					team.object2.userData.duration = 20 / 24;
-				}
-
-
-				function animate() {
-					for (let i = 1; i < teams.length; i++) {
-						const {object, object2} = teams[i],
-							duration = 20 / 24,
-							duration2 = object2.userData.duration;
-
-						if (object) {
-							object.userData.mixer.setTime((performance.now() / 750 + i / teams.length * duration) % duration);
-						}
-						if (object2) {
-							object2.userData.mixer.setTime((performance.now() / 750 + i / teams.length * duration2) % duration2);
-						}
-					}
-					requestAnimationFrame(animate);
-				}
-
-				animate();
-			});
-
-			me.map = map;
-			me.camera = new THREE.Camera();
-
-			/*map.on('resize', event => {
-				const {width, height} = event.target.transform;
-
-				me.camera.aspect = width / height;
-				me.camera.updateProjectionMatrix();
-			});*/
-		},
-		render: (gl, matrix) => {
-			const me = this,
-				m = new THREE.Matrix4().fromArray(matrix),
-				l = new THREE.Matrix4()
-					.makeTranslation(modelOrigin.x, modelOrigin.y, modelOrigin.z)
-					.scale(new THREE.Vector3(1, -1, 1)),
-				rad = THREE.MathUtils.degToRad(me.map.getBearing() + 30);
-
-			me.camera.projectionMatrix = m.multiply(l);
-			me.light.position.set(-Math.sin(rad), -Math.cos(rad), SQRT3).normalize();
-			me.renderer.resetState();
-			me.renderer.render(me.scene, me.camera);
-			me.map.triggerRepaint();
-		}
-	}, buildingLayerId);
+	map.addLayer(new RunnerLayer({id: 'runners'}), buildingLayerId);
 
 	for (const section of sections[trip]) {
 		const {name, index, distance} = section,
@@ -4712,285 +5010,124 @@ map.once('styledata', function () {
 		element.addEventListener('click', event => {
 			trackingTeam = undefined;
 			stopTrackingAnimation();
-			document.getElementById('panel').style.bottom = 'min(-25%, -150px)';
+			hidePanel();
+			setInteractions(false);
 			map.flyTo({
 				center: turf.getCoord(coord),
 				zoom: 21,
 				bearing,
 				pitch: 80,
+				easing: t => t,
 				speed: 0.5
+			}, {
+				auto: true
+			});
+			map.once('moveend', () => {
+				setInteractions(true);
+				canvasElement.focus();
 			});
 		});
 	}
 
-	for (const team of teams) {
-		team.distance = 0;
-		team.speed = 20 - Math.random() * 0.6;
-		team.ts = trips[trip].startTime / 1000;
-		team.speedHistory = [{d: [], s: []}, {d: [], s: []}];
-	}
-
 	for (let i = teams.length - 1; i > 0; i--) {
-		const team = teams[i];
-		const popup = new AnimatedPopup({anchor: 'top', closeButton: false});
-		const el = document.createElement('div');
+		const team = teams[i],
+			popup = new AnimatedPopup({anchor: 'top', closeButton: false}),
+			element = document.createElement('div');
 
-		el.className = 'marker';
-		el.style.backgroundImage = `url('markers/${i}.png')`;
+		element.className = 'marker';
+		element.style.backgroundImage = `url('markers/${i}.png')`;
 
-		el.addEventListener('mouseenter', event => {
+		element.addEventListener('mouseenter', event => {
 			if (!popup.isOpen()) {
 				team.marker.getPopup().setHTML(`${team.name}<br>${team.runners[trip * 5 + team.estimatedSection]}`);
 				team.marker.togglePopup();
 			}
 		});
 
-		el.addEventListener('mouseleave', event => {
+		element.addEventListener('mouseleave', event => {
 			if (popup.isOpen()) {
 				team.marker.togglePopup();
 			}
 		});
 
-		el.addEventListener('click', event => {
-			const now = Date.now();
-			const team = teams[i];
-
+		element.addEventListener('click', event => {
 			trackingTeam = i;
 			if (autoTrackingMode) {
 				lastViewSwitch = Date.now();
 			}
 			startTrackingAnimation();
-			document.getElementById('panel').style.bottom = 0;
+			showPanel();
 			updateChart();
 
+			canvasElement.focus();
 			event.stopPropagation();
 		});
 
-		team.marker = new mapboxgl.Marker({element: el})
+		team.marker = new mapboxgl.Marker({element})
 			.setLngLat([0, 0])
 			.setPopup(popup)
 			.addTo(map);
-
-		team.offset = Math.random() * 6 - 3;
 	}
 
 	map.on('click', event => {
 		trackingTeam = undefined;
 		stopTrackingAnimation();
-		document.getElementById('panel').style.bottom = 'min(-25%, -150px)';
+		hidePanel();
 	});
 
-	function updateScales() {
+	const updateScales = () => {
+		const scaleValue = modelScale * 5 * Math.pow(2, 20 - Math.min(map.getZoom(), 20));
+
 		for (let i = 1; i < teams.length; i++) {
 			const {object, object2} = teams[i];
 
 			if (object) {
 				const {scale} = object;
 
-				scale.x = scale.y = scale.z =
-					modelScale * 5 * Math.pow(2, 20 - Math.min(map.getZoom(), 20));
+				scale.x = scale.y = scale.z = scaleValue;
 			}
 			if (object2) {
 				const {scale} = object2;
 
-				scale.x = scale.y = scale.z =
-					modelScale * 5 * Math.pow(2, 20 - Math.min(map.getZoom(), 20));
+				scale.x = scale.y = scale.z = scaleValue;
 			}
 		}
-	}
+	};
 
-	map.on('zoom', updateScales)
-	map.on('move', updateScales)
-	map.on('resize', updateScales)
+	map.on('zoom', updateScales);
+	map.on('move', updateScales);
+	map.on('resize', updateScales);
+
+	const switchToNormalTrackingMode = event => {
+		if (!event.auto) {
+			document.querySelector('.menu div.active').classList.remove('active');
+			document.getElementById('normal-view').classList.add('active');
+
+			trackingMode = 'normal';
+			autoTrackingMode = false;
+		}
+	};
+
+	map.on('zoomstart', switchToNormalTrackingMode)
+	map.on('rotatestart', switchToNormalTrackingMode)
+	map.on('pitchstart', switchToNormalTrackingMode)
 
 	map.on('pitch', () => {
+		const pitchFactor = Math.sin(THREE.MathUtils.degToRad(map.getPitch())),
+			zoomFactor = Math.pow(2, Math.max(map.getZoom(), 20) - 20),
+			offset = [0, -75 * pitchFactor * zoomFactor];
+
 		for (const {popup} of sections[trip]) {
 			if (popup) {
-				popup.setOffset([0, -75 * Math.sin(THREE.MathUtils.degToRad(map.getPitch())) * Math.pow(2, Math.max(map.getZoom(), 20) - 20)]);
+				popup.setOffset(offset);
 			}
 		}
 	})
 
-
-	// Workaround to update pitch using constraints
-	const {get: getPitch, set: setPitch} = Object.getOwnPropertyDescriptor(map.transform.constructor.prototype, 'pitch');
-	Object.defineProperty(map.transform, 'pitch', {
-		get: getPitch,
-		set: function(pitch) {
-			setPitch.call(this, pitch);
-			this._constrain();
-			this._calcMatrices();
-		}
-	});
-
-	swiper = new Swiper('.swiper', {
-		navigation: {
-			nextEl: '.swiper-button-next',
-			prevEl: '.swiper-button-prev'
-		}
-	});
-	swiper.on('slideChange', updateChart);
-
-	charts[0] = new Chart(document.getElementById('chart-speed'), {
-		type: 'line',
-		data: {
-			datasets: teams.slice(1).map(team => ({
-				label: '',
-				data: [],
-				borderColor: 'rgb(0, 127, 0)',
-				backgroundColor: 'rgb(0, 0, 0)',
-				borderWidth: 1,
-				borderCapStyle: 'round',
-				borderJoinStyle: 'round',
-				pointRadius: 0
-			}))
-		},
-		options: {
-			maintainAspectRatio: false,
-			layout: {
-				padding: {
-					left: 40,
-					top: 5,
-					right: 50,
-					bottom: 10
-				}
-			},
-			scales: {
-				x: {
-					type: 'linear',
-					min: 0,
-					grid: {
-						tickLength: 0
-					}
-				},
-				y: {
-					grid: {
-						tickLength: 0
-					}
-				}
-			},
-			interaction: {
-				mode: 'nearest',
-				intersect: false
-			},
-			animation: false,
-			plugins: {
-				title: {
-					text: '',
-					display: true
-				},
-				legend: {
-					display: false
-				},
-				tooltip: {
-					callbacks: {
-						title: context => `距離 ${context[0].parsed.x.toFixed(2)} km`,
-						label: context => `${context.dataset.label} ${context.parsed.y} km/s`
-					}
-				},
-				annotation: {
-					annotations: {
-						position: {
-							type: 'line',
-							borderColor: 'rgb(255, 0, 0)',
-							xMin: 0,
-							xMax: 0
-						},
-						record: {
-							type: 'line',
-							borderColor: 'rgb(255, 153, 0)',
-							yMin: 0,
-							yMax: 0,
-							label: {
-								content: '区間新',
-								enabled: true,
-								color: 'rgb(0, 0, 0)',
-								backgroundColor: 'rgba(255, 153, 0)',
-								position: '80%'
-							},
-							drawTime: 'beforeDatasetsDraw'
-						}
-					}
-				}
-			}
-		}
-	});
-
-	charts[1] = new Chart(document.getElementById('chart-elevation'), {
-		type: 'line',
-		data: {
-			datasets: [{
-				data: [],
-				fill: 'origin',
-				backgroundColor: 'rgba(0, 102, 255, 0.3)',
-				borderColor: 'rgba(51, 153, 255)',
-				borderCapStyle: 'round',
-				borderJoinStyle: 'round',
-				pointRadius: 0
-			}]
-		},
-		options: {
-			maintainAspectRatio: false,
-			layout: {
-				padding: {
-					left: 40,
-					top: 5,
-					right: 50,
-					bottom: 10
-				}
-			},
-			scales: {
-				x: {
-					type: 'linear',
-					min: 0,
-					grid: {
-						tickLength: 0
-					}
-				},
-				y: {
-					min: 0,
-					grid: {
-						tickLength: 0
-					}
-				}
-			},
-			interaction: {
-				mode: 'nearest',
-				intersect: false
-			},
-			animation: false,
-			plugins: {
-				title: {
-					text: '',
-					display: true
-				},
-				legend: {
-					display: false
-				},
-				tooltip: {
-					callbacks: {
-						title: context => `距離 ${context[0].parsed.x.toFixed(2)} km`,
-						label: context => `標高 ${context.parsed.y} m`
-					}
-				},
-				annotation: {
-					annotations: {
-						position: {
-							type: 'line',
-							borderColor: 'rgb(255, 0, 0)',
-							xMin: 0,
-							xMax: 0
-						}
-					}
-				}
-			}
-		}
-	});
-
 	let lastDataLoad = 0;
-	let lastDataLoadComplete = 0;
+	let initialDataLoadComplete = false;
 
-	function frame() {
+	const frame = () => {
 		const now = Date.now(),
 			transform = map.transform;
 
@@ -5000,6 +5137,10 @@ map.once('styledata', function () {
 			fetch('https://mini-tokyo.appspot.com/hakone')
 				.then(response => response.json())
 				.then(result => {
+					if (trip === 0 && now > trips[trip].startTime + 60000) {
+						result.points = [];
+					}
+
 					for (const point of result.points) {
 						const now = Date.now();
 						const id = point[0];
@@ -5007,6 +5148,7 @@ map.once('styledata', function () {
 						const lng = point[2];
 						let distance = point[5];
 						let speed = point[6];
+						const status = point[7];
 						const section = point[8];
 						let ts = point[9];
 						const prevDistance = teams[id].distance;
@@ -5028,35 +5170,49 @@ map.once('styledata', function () {
 							ts = now / 1000;
 						}
 
-						if (now > trips[trip].startTime + 60000 || (trip === 1 && point !== result.points[1])) {
-							Object.assign(teams[id], {
-								lat,
-								lng,
-								distance,
-								speed,
-								section,
-								ts
-							});
+						if (status === null) {
+							distance = speed = 0;
 						}
+
+						Object.assign(teams[id], {
+							lat,
+							lng,
+							distance,
+							speed,
+							section,
+							ts
+						});
 					}
-					if (!lastDataLoadComplete) {
-						if (now > trips[trip].startTime - 1000000 && now <= trips[trip].startTime) {
+					if (!initialDataLoadComplete) {
+						if (maxDistance === 0) {
 							trackingTeam = leadingTeam;
-							document.getElementById('panel').style.bottom = 0;
+							showPanel();
 						} else {
 							setTimeout(() => {
+								setInteractions(false);
 								map.flyTo({
 									center: turf.getCoord(turf.along(routeFeature, maxDistance + 0.1)),
 									zoom: 17,
-									bearing : 0,
+									bearing: (teams[leadingTeam].bearing + 360) % 360 - 180,
 									pitch: 60,
+									easing: t => t,
 									speed: 0.5
+								}, {
+									auto: true
+								});
+								map.once('moveend', () => {
+									trackingTeam = leadingTeam;
+									trackingMode = 'front';
+									lastViewSwitch = Date.now();
+									startTrackingAnimation();
+									showPanel();
+									setInteractions(true);
 								});
 							}, 3000);
 						}
+						initialDataLoadComplete = true;
 					}
 					updateChart();
-					lastDataLoadComplete = now;
 				});
 
 			if (reset) {
@@ -5073,6 +5229,8 @@ map.once('styledata', function () {
 			lastDataLoad = now;
 		}
 
+		updateModelOrigin(map.getCenter());
+
 		for (let i = 1; i < teams.length; i++) {
 			const team = teams[i];
 			if (!isNaN(team.distance) && !isNaN(team.speed) && !isNaN(team.ts)) {
@@ -5087,12 +5245,6 @@ map.once('styledata', function () {
 				if (distance > maxDistance) {
 					maxDistance = distance;
 					leadingTeam = i;
-				}
-
-				if (i === 1) {
-					const elevation = map.queryTerrainElevation(coord);
-					modelOrigin = mapboxgl.MercatorCoordinate.fromLngLat(coord, elevation);
-					modelScale = modelOrigin.meterInMercatorCoordinateUnits();
 				}
 
 				const p1 = map.project(coord);
@@ -5164,30 +5316,28 @@ map.once('styledata', function () {
 						bearingFactor: .02
 					});
 				}
-				if (trackingTeam === i || (!trackingTeam && i === leadingTeam)) {
+
+				if (i === trackingTeam || (i === leadingTeam && trackingTeam === undefined)) {
 					const baseDistance = sections[trip][section].distance,
 						nextDistance = sections[trip][section + 1].distance;
 
-					document.getElementById('trip').innerText = trips[trip].name;
-					document.getElementById('section').innerText = trip * 5 + section + 1;
-					document.getElementById('distance').innerText = (distance - baseDistance).toFixed(2);
-					document.getElementById('progress').style.width = `${(distance - baseDistance) / (nextDistance - baseDistance) * 100}%`;
+					tripTextElement.innerText = trips[trip].name;
+					sectionTextElement.innerText = trip * 5 + section + 1;
+					distanceTextElement.innerText = (distance - baseDistance).toFixed(2);
+					distanceBarElement.style.width = `${(distance - baseDistance) / (nextDistance - baseDistance) * 100}%`;
 
-					if (trackingTeam === i) {
-						document.getElementById('tracking-status').style.display = 'inline';
-						document.getElementById('tracking-target').style.display = 'table';
-						document.getElementById('tracking-marker').style.backgroundImage = `url('markers/${i}.png')`;
-						document.getElementById('tracking-team').innerText = teams[i].name;
-						document.getElementById('tracking-runner').innerText = teams[i].runners[trip * 5 + section];
+					if (i === trackingTeam) {
+						showTrackingInfo();
+						trackingMarkerElement.style.backgroundImage = `url('markers/${i}.png')`;
+						trackingTeamTextElement.innerText = teams[i].name;
+						trackingRunnerTextElement.innerText = teams[i].runners[trip * 5 + section];
 
 						if (chartSection !== section) {
 							updateChart();
 						}
 					} else {
-						document.getElementById('tracking-status').style.display = 'none';
-						document.getElementById('tracking-target').style.display = 'none';
+						hideTrackingInfo();
 					}
-
 				}
 			}
 		}
@@ -5222,57 +5372,7 @@ map.once('styledata', function () {
 		}
 
 		requestAnimationFrame(frame);
-	}
+	};
 
 	frame();
 });
-
-class MapboxGLButtonControl {
-
-	constructor(optionArray) {
-		this._options = optionArray.map(options => ({
-			className: options.className || '',
-			title: options.title || '',
-			eventHandler: options.eventHandler
-		}));
-	}
-
-	onAdd(map) {
-		const me = this;
-
-		me._map = map;
-
-		me._container = document.createElement('div');
-		me._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group';
-
-		me._buttons = me._options.map(options => {
-			const button = document.createElement('button'),
-				icon = document.createElement('span'),
-				{className, title, eventHandler} = options;
-
-			button.className = className;
-			button.type = 'button';
-			button.title = title;
-			button.setAttribute('aria-label', title);
-			button.onclick = eventHandler;
-
-			icon.className = 'mapboxgl-ctrl-icon';
-			icon.setAttribute('aria-hidden', true);
-			button.appendChild(icon);
-
-			me._container.appendChild(button);
-
-			return button;
-		});
-
-		return me._container;
-	}
-
-	onRemove() {
-		const me = this;
-
-		me._container.parentNode.removeChild(me._container);
-		me._map = undefined;
-	}
-
-}

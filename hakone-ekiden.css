@@ -122,7 +122,7 @@ body {
 	color: #f90;
 	display: none;
 }
-.tracking-target {
+.tracking-info {
 	display: none;
 	margin-top: 10px;
 }
@@ -217,7 +217,7 @@ body {
 }
 .info {
 	position: absolute;
-	top: 165px;
+	top: 50px;
 	right: 60px;
 	width: 250px;
 	background-color: #fff;
