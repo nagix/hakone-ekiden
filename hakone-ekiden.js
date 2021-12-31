@@ -4049,7 +4049,7 @@ const trips = [{
 	center: routes[0][0],
 	bearing: 95,
 	startTime: 1641078000000
-//	startTime: Date.now() - 4.6*60*60*1000
+//	startTime: Date.now() + 10000
 }, {
 	name: '復路',
 	center: routes[1][0],
@@ -5137,10 +5137,6 @@ map.once('styledata', () => {
 			fetch('https://mini-tokyo.appspot.com/hakone')
 				.then(response => response.json())
 				.then(result => {
-					if (trip === 0 && now > trips[trip].startTime + 60000) {
-						result.points = [];
-					}
-
 					for (const point of result.points) {
 						const now = Date.now();
 						const id = point[0];
@@ -5174,14 +5170,16 @@ map.once('styledata', () => {
 							distance = speed = 0;
 						}
 
-						Object.assign(teams[id], {
-							lat,
-							lng,
-							distance,
-							speed,
-							section,
-							ts
-						});
+						if (now >= trips[trip].startTime + 60000 || trip === 1) {
+							Object.assign(teams[id], {
+								lat,
+								lng,
+								distance,
+								speed,
+								section,
+								ts
+							});
+						}
 					}
 					if (!initialDataLoadComplete) {
 						if (maxDistance === 0) {
