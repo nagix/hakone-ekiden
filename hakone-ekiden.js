@@ -4049,13 +4049,11 @@ const trips = [{
 	center: routes[0][0],
 	bearing: 95,
 	startTime: 1641078000000
-//	startTime: Date.now() + 10000
 }, {
 	name: '復路',
 	center: routes[1][0],
 	bearing: -50,
 	startTime: 1641164400000
-//	startTime: Date.now() + 10000
 }];
 
 const sections = [[
@@ -4183,7 +4181,7 @@ const charts = [];
 
 const SQRT3 = Math.sqrt(3);
 
-const trip = 0;
+const trip = new Date().getDate() % 2;
 const routeFeature = turf.lineString(routes[trip]);
 
 for (const team of teams) {
@@ -5144,7 +5142,7 @@ map.once('styledata', () => {
 						const lng = point[2];
 						let distance = point[5];
 						let speed = point[6];
-						const status = point[7];
+						const position = point[7];
 						const section = point[8];
 						let ts = point[9];
 						const prevDistance = teams[id].distance;
@@ -5152,7 +5150,7 @@ map.once('styledata', () => {
 						const prevTs = teams[id].ts;
 
 						const history = teams[id].speedHistory[trip];
-						if (distance > history.d[history.d.length - 1]) {
+						if (result.status.sg === 0 && position !== null && (history.d.length === 0 || distance > history.d[history.d.length - 1])) {
 							history.d.push(distance);
 							history.s.push(speed);
 						}
@@ -5166,7 +5164,7 @@ map.once('styledata', () => {
 							ts = now / 1000;
 						}
 
-						if (status === null) {
+						if (result.status.sg === 1 || position === null) {
 							distance = speed = 0;
 						}
 
