@@ -146,8 +146,13 @@ body {
 	padding: 0 4px;
 	border-radius: 4px;
 	color: #fff;
-	background-color: green;
 	display: inline-block;
+}
+.tag.test {
+	background-color: green;
+}
+.tag.live {
+	background-color: red;
 }
 .bg {
 	position: absolute;
@@ -217,7 +222,7 @@ body {
 }
 .info {
 	position: absolute;
-	top: 50px;
+	top: 10px;
 	right: 60px;
 	width: 250px;
 	background-color: #fff;
@@ -238,6 +243,8 @@ body {
 .info div:last-child {
 	padding: 0 10px;
 	border-radius: 0 0 10px 10px;
+	font-size: 14px;
+	line-height: 22px;
 }
 .panel {
 	position: absolute;
