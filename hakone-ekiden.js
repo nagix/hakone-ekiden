@@ -4181,7 +4181,7 @@ const charts = [];
 
 const SQRT3 = Math.sqrt(3);
 
-const trip = new Date().getDate() % 2;
+const trip = new Date(Date.now() + (new Date().getTimezoneOffset() + 540) * 60000).getDate() % 2;
 const routeFeature = turf.lineString(routes[trip]);
 
 for (const team of teams) {
