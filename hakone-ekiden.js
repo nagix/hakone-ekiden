@@ -4201,8 +4201,6 @@ let autoTrackingMode = true;
 let lastViewSwitch = Date.now();
 let trackingAnimationID;
 let chartSection;
-let leadingTeam = 1;
-let maxDistance = 0;
 
 class MapboxGLButtonControl {
 
@@ -4626,6 +4624,20 @@ function getSection(distance) {
 	return sections[trip].length - 2;
 }
 
+const placing = [4, 8, 1, 9, 7, 12, 10, 2, 3, 5, 6, 15, 16, 20, 21, 14, 13, 11, 17, 19, 18];
+
+function updatePlacing() {
+	placing
+		.sort((a, b) => teams[b].distance - teams[a].distance)
+		.forEach((v, i) => {
+			const team = teams[v],
+				element = document.getElementById(`team-${i + 1}`);
+
+			team.marker.getElement().style.zIndex = 21 - i;
+			element.innerText = `${i + 1}. ${team.name}`;
+		});
+}
+
 function updateChart() {
 	if (isNaN(trackingTeam)) {
 		return;
@@ -4710,6 +4722,7 @@ const trackingMarkerElement = document.getElementById('tracking-marker');
 const trackingTeamTextElement = document.getElementById('tracking-team');
 const trackingRunnerTextElement = document.getElementById('tracking-runner');
 
+const teamsBGElement = document.getElementById('teams-bg');
 const viewsBGElement = document.getElementById('views-bg');
 const infoBGElement = document.getElementById('info-bg');
 
@@ -4751,6 +4764,12 @@ const distanceBarElement = document.getElementById('progress');
 map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}));
 map.addControl(new mapboxgl.FullscreenControl());
 map.addControl(new MapboxGLButtonControl([{
+	className: 'mapboxgl-ctrl-placing',
+	title: 'チーム順位・追跡',
+	eventHandler() {
+		teamsBGElement.style.display = 'block';
+	}
+}, {
 	className: 'mapboxgl-ctrl-camera',
 	title: 'カメラ切り替え',
 	eventHandler() {
@@ -4763,6 +4782,26 @@ map.addControl(new MapboxGLButtonControl([{
 		infoBGElement.style.display = 'block';
 	}
 }]));
+
+teamsBGElement.addEventListener('click', () => {
+	teamsBGElement.style.display = 'none';
+	canvasElement.focus();
+});
+
+for (let i = 1; i < teams.length; i++) {
+	const element = document.getElementById(`team-${i}`);
+
+	element.addEventListener('click', () => {
+		trackingTeam = placing[i - 1];
+		if (autoTrackingMode) {
+			lastViewSwitch = Date.now();
+		}
+		startTrackingAnimation();
+		showPanel();
+		updateChart();
+		canvasElement.focus();
+	});
+}
 
 viewsBGElement.addEventListener('click', () => {
 	viewsBGElement.style.display = 'none';
@@ -5097,7 +5136,7 @@ map.once('styledata', () => {
 	map.on('resize', updateScales);
 
 	const switchToNormalTrackingMode = event => {
-		if (!event.auto) {
+		if (trackingTeam !== undefined && !event.auto) {
 			document.querySelector('.menu div.active').classList.remove('active');
 			document.getElementById('normal-view').classList.add('active');
 
@@ -5180,16 +5219,16 @@ map.once('styledata', () => {
 						}
 					}
 					if (!initialDataLoadComplete) {
-						if (maxDistance === 0) {
-							trackingTeam = leadingTeam;
+						if (teams[placing[0]].distance === 0) {
+							trackingTeam = placing[0];
 							showPanel();
 						} else {
 							setTimeout(() => {
 								setInteractions(false);
 								map.flyTo({
-									center: turf.getCoord(turf.along(routeFeature, maxDistance + 0.1)),
+									center: turf.getCoord(turf.along(routeFeature, teams[placing[0]].estimatedDistance + 0.1)),
 									zoom: 17,
-									bearing: (teams[leadingTeam].bearing + 360) % 360 - 180,
+									bearing: (teams[placing[0]].bearing + 360) % 360 - 180,
 									pitch: 60,
 									easing: t => t,
 									speed: 0.5
@@ -5197,7 +5236,7 @@ map.once('styledata', () => {
 									auto: true
 								});
 								map.once('moveend', () => {
-									trackingTeam = leadingTeam;
+									trackingTeam = placing[0];
 									trackingMode = 'front';
 									lastViewSwitch = Date.now();
 									startTrackingAnimation();
@@ -5209,6 +5248,13 @@ map.once('styledata', () => {
 						initialDataLoadComplete = true;
 					}
 					updateChart();
+					updatePlacing();
+					if (autoPaging && trackingTeam !== undefined && trackingTeam !== placing[0]) {
+						trackingTeam = placing[0];
+						if (!autoTrackingMode) {
+							startTrackingAnimation();
+						}
+					}
 				});
 
 			if (reset) {
@@ -5237,11 +5283,6 @@ map.once('styledata', () => {
 					point3 = turf.destination(point, team.offset / 1000, bearing + 90),
 					coord = team.coord = turf.getCoord(point3),
 					section = team.estimatedSection = getSection(distance);
-
-				if (distance > maxDistance) {
-					maxDistance = distance;
-					leadingTeam = i;
-				}
 
 				const p1 = map.project(coord);
 					p2 = transform._coordinatePoint(transform.locationCoordinate(mapboxgl.LngLat.convert(coord), Math.pow(2, 20 - Math.min(map.getZoom(), 20)) * 4), true);
@@ -5313,7 +5354,7 @@ map.once('styledata', () => {
 					});
 				}
 
-				if (i === trackingTeam || (i === leadingTeam && trackingTeam === undefined)) {
+				if (i === trackingTeam || (i === placing[0] && trackingTeam === undefined)) {
 					const baseDistance = sections[trip][section].distance,
 						nextDistance = sections[trip][section + 1].distance;
 
@@ -5339,20 +5380,8 @@ map.once('styledata', () => {
 		}
 
 		if (trackingTeam && now >= lastViewSwitch + 30000) {
-			[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
-				.sort((a, b) => teams[a].estimatedDistance - teams[b].estimatedDistance)
-				.forEach((v, i) => {
-					teams[v].marker.getElement().style.zIndex = i + 1;
-				});
-
 			if (autoPaging) {
 				swiper.slideTo((swiper.activeIndex + 1) % 2);
-				if (trackingTeam !== leadingTeam) {
-					trackingTeam = leadingTeam;
-					if (!autoTrackingMode) {
-						startTrackingAnimation();
-					}
-				}
 			}
 
 			if (autoTrackingMode) {
