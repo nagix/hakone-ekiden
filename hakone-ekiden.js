@@ -4832,6 +4832,7 @@ const map = new mapboxgl.Map({
 	bearing: trips[trip].bearing,
 	pitch: 80
 });
+map.setPadding({top: 150});
 
 // Workaround to update pitch using constraints
 const {get: getPitch, set: setPitch} = Object.getOwnPropertyDescriptor(map.transform.constructor.prototype, 'pitch');
