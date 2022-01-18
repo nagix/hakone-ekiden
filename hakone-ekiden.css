@@ -103,6 +103,19 @@ body {
 	font-weight: bold;
 	line-height: 30px;
 }
+.replay-info {
+	width: 166px;
+	margin-top: 4px;
+	font-size: 14px;
+}
+.clock {
+	float: right;
+}
+.replay-slider {
+	width: 100%;
+	margin: 2px;
+	cursor: ew-resize;
+}
 .tracking-position {
 	font-size: 14px;
 	font-weight: bold;
@@ -151,7 +164,7 @@ body {
 	color: #fff;
 	display: inline-block;
 }
-.tag.test {
+.tag.replay {
 	background-color: green;
 }
 .tag.live {

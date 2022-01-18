@@ -34,13 +34,21 @@
 	<script src="https://cdn.jsdelivr.net/npm/swiper@7.4.1/swiper-bundle.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.2.2/dist/chartjs-plugin-annotation.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/pako@2.0.4/dist/pako_inflate.min.js"></script>
 </head>
 <body>
 	<div id="map">
 		<div class="map-overlay">
 			<div class="map-overlay-inner">
 				<div class="title">
-					<span>箱根駅伝 3D</span> <span class="tag live">LIVE</span>
+					<span>箱根駅伝 3D</span> <span class="tag replay">REPLAY</span>
+				</div>
+				<div class="replay-info">
+					<input id="day1" type="radio" name="day" value="1" checked><label for="day1">往路</label>
+					<input id="day2" type="radio" name="day" value="2"><label for="day2">復路</label>
+					<span id="clock" class="clock">7:59:45</span>
+					<br>
+					<input id="replay-slider" class="replay-slider" type="range" min="0" max="21600000" step="0" value="0">
 				</div>
 				<div class="tracking-position">
 					<span id="trip">往路</span><span id="section">1</span>区

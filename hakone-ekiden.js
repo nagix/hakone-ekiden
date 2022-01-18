@@ -4048,12 +4048,14 @@ const trips = [{
 	name: '往路',
 	center: routes[0][0],
 	bearing: 95,
-	startTime: 1641078000000
+	startTime: 1641078000000,
+	placing: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
 }, {
 	name: '復路',
 	center: routes[1][0],
 	bearing: -50,
-	startTime: 1641164400000
+	startTime: 1641164400000,
+	placing: [4, 8, 1, 9, 7, 12, 10, 2, 3, 5, 6, 15, 16, 20, 21, 14, 13, 11, 17, 19, 18]
 }];
 
 const sections = [[
@@ -4160,6 +4162,26 @@ const teams = [{
 	runners: ['中山 雄太 (3年)', '並木 寧音 (2年)', '斎藤 俊輔 (4年)', '村上 航大 (3年)', '福谷 颯太 (3年)', '鈴木 康也 (1年)', '田島 公太郎 (1年)', '大野 陽人 (3年)', '竹井 祐貴 (4年)', '諸星 颯大 (3年)']
 }];
 
+let replayData;
+let replayDataIndex = 0;
+fetch('hakone-2022.json.gz').then(async response => {
+	const reader = response.body.getReader(),
+		inflate = new pako.Inflate({to: 'string'});
+
+	while (true) {
+		const {done, value} = await reader.read();
+
+		if (done) {
+			replayData = JSON.parse(inflate.result);
+			for (const point of replayData[225].points) {
+				teams[point[0]]._speed = point[5] / (340 / 3600);
+			}
+			break;
+		}
+		inflate.push(value);
+	}
+});
+
 const trackingModes = [
 	'auto',
 	'normal',
@@ -4181,15 +4203,19 @@ const charts = [];
 
 const SQRT3 = Math.sqrt(3);
 
-const trip = new Date(Date.now() + (new Date().getTimezoneOffset() + 540) * 60000).getDate() % 2;
-const routeFeature = turf.lineString(routes[trip]);
+//let trip = new Date(Date.now() + (new Date().getTimezoneOffset() + 540) * 60000).getDate() % 2;
+let trip = 0;
+let clockOffset = Date.now() - (trips[trip].startTime - 15000);
+const routeFeatures = routes.map(route => turf.lineString(route));
 
 for (const team of teams) {
 	team.distance = 0;
-	team.speed = 20 - Math.random() * 0.6;
+	team.speed = team._speed = 19.6 - Math.random() * 0.6;
 	team.ts = trips[trip].startTime / 1000;
 	team.speedHistory = [{d: [], s: []}, {d: [], s: []}];
 	team.offset = Math.random() * 6 - 3;
+	team.estimatedDistance = 0;
+	team.estimatedSection = 0;
 }
 
 let modelOrigin;
@@ -4198,7 +4224,8 @@ let modelScale;
 let trackingTeam;
 let trackingMode = 'front';
 let autoTrackingMode = true;
-let lastViewSwitch = Date.now();
+let lastDataLoad = 0;
+let lastViewSwitch = Date.now() - clockOffset;
 let trackingAnimationID;
 let chartSection;
 
@@ -4624,7 +4651,48 @@ function getSection(distance) {
 	return sections[trip].length - 2;
 }
 
-const placing = [4, 8, 1, 9, 7, 12, 10, 2, 3, 5, 6, 15, 16, 20, 21, 14, 13, 11, 17, 19, 18];
+function updateStations() {
+	for (const section of sections[1 - trip]) {
+		if (section.popup) {
+			section.popup.remove();
+		}
+	}
+
+	for (const section of sections[trip]) {
+		const {name, index, distance} = section,
+			point1 = turf.along(routeFeatures[trip], distance),
+			point2 = turf.along(routeFeatures[trip], distance + 0.001),
+			bearing = turf.bearing(point2, point1) - 10,
+			coord = turf.getCoord(point1);
+
+		section.popup = new AnimatedPopup({closeButton: false, closeOnClick: false, anchor: 'bottom'})
+			.setLngLat(coord)
+			.setHTML(name)
+			.addTo(map);
+		section.popup.getElement().addEventListener('click', event => {
+			trackingTeam = undefined;
+			stopTrackingAnimation();
+			hidePanel();
+			setInteractions(false);
+			map.flyTo({
+				center: turf.getCoord(coord),
+				zoom: 21,
+				bearing,
+				pitch: 80,
+				easing: t => t,
+				speed: 0.5
+			}, {
+				auto: true
+			});
+			map.once('moveend', () => {
+				setInteractions(true);
+				canvasElement.focus();
+			});
+		});
+	}
+}
+
+let placing = trips[trip].placing.slice();
 
 function updatePlacing() {
 	placing
@@ -4718,6 +4786,27 @@ function hideTrackingInfo() {
 	trackingInfoElement.style.display = 'none';
 }
 
+function loadRunnerData(now, callback) {
+//	fetch('https://mini-tokyo.appspot.com/hakone')
+//		.then(response => response.json())
+//		.then(callback);
+
+	if (replayData) {
+		const tzOffset = (new Date().getTimezoneOffset() + 540) * 60000;
+
+		while (replayDataIndex < replayData.length - 1) {
+			const s = replayData[replayDataIndex + 1].status.now.split(/[/ :]/),
+				t = new Date(s[0], s[1] - 1, s[2], s[3], s[4], s[5]).getTime() - tzOffset;
+
+			if (now < t) {
+				break;
+			}
+			replayDataIndex++;
+		}
+		callback(replayData[replayDataIndex]);
+	}
+}
+
 const trackingMarkerElement = document.getElementById('tracking-marker');
 const trackingTeamTextElement = document.getElementById('tracking-team');
 const trackingRunnerTextElement = document.getElementById('tracking-runner');
@@ -4756,10 +4845,53 @@ Object.defineProperty(map.transform, 'pitch', {
 });
 
 const canvasElement = document.querySelector('#map .mapboxgl-canvas');
+const day1Element = document.getElementById('day1');
+const day2Element = document.getElementById('day2');
+const clockElement = document.getElementById('clock');
+const sliderElement = document.getElementById('replay-slider');
 const tripTextElement = document.getElementById('trip');
 const sectionTextElement = document.getElementById('section');
 const distanceTextElement = document.getElementById('distance');
 const distanceBarElement = document.getElementById('progress');
+
+day1Element.addEventListener('change', () => {
+	trip = 0;
+	clockOffset = Date.now() - trips[trip].startTime;
+	lastDataLoad = 0;
+	replayDataIndex = 0;
+	sliderElement.value = 0;
+	placing = trips[trip].placing.slice();
+	trackingTeam = placing[0];
+	trackingMode = 'front';
+	lastViewSwitch = Date.now() - clockOffset;
+	map.getSource('route').setData(routeFeatures[trip]);
+	map.jumpTo({center: trips[trip].center, zoom: 21, bearing: trips[trip].bearing, pitch: 80}, {auto: true});
+	updateStations();
+	showPanel();
+	canvasElement.focus();
+});
+day2Element.addEventListener('change', () => {
+	trip = 1;
+	clockOffset = Date.now() - trips[trip].startTime;
+	lastDataLoad = 0;
+	replayDataIndex = 0;
+	sliderElement.value = 0;
+	placing = trips[trip].placing.slice();
+	trackingTeam = placing[0];
+	trackingMode = 'front';
+	lastViewSwitch = Date.now() - clockOffset;
+	map.getSource('route').setData(routeFeatures[trip]);
+	map.jumpTo({center: trips[trip].center, zoom: 21, bearing: trips[trip].bearing, pitch: 80}, {auto: true});
+	updateStations();
+	showPanel();
+	canvasElement.focus();
+});
+sliderElement.addEventListener('input', () => {
+	clockOffset = Date.now() - (trips[trip].startTime + parseInt(sliderElement.value));
+	lastDataLoad = 0;
+	replayDataIndex = 0;
+	canvasElement.focus();
+});
 
 map.addControl(new mapboxgl.NavigationControl({visualizePitch: true}));
 map.addControl(new mapboxgl.FullscreenControl());
@@ -4794,7 +4926,7 @@ for (let i = 1; i < teams.length; i++) {
 	element.addEventListener('click', () => {
 		trackingTeam = placing[i - 1];
 		if (autoTrackingMode) {
-			lastViewSwitch = Date.now();
+			lastViewSwitch = Date.now() - clockOffset;
 		}
 		startTrackingAnimation();
 		showPanel();
@@ -4824,7 +4956,7 @@ for (const mode of trackingModes) {
 		if (trackingTeam) {
 			if (autoTrackingMode) {
 				trackingMode = trackingModes[Math.floor(Math.random() * (trackingModes.length - 2)) + 2];
-				lastViewSwitch = Date.now();
+				lastViewSwitch = Date.now() - clockOffset;
 			}
 			startTrackingAnimation();
 		}
@@ -5004,14 +5136,7 @@ charts[1] = new Chart('chart-elevation', {
 map.once('styledata', () => {
 	map.addSource('route', {
 		type: 'geojson',
-		data: {
-			type: 'Feature',
-			properties: {},
-			geometry: {
-				type: 'LineString',
-				coordinates: routes[trip]
-			}
-		}
+		data: routeFeatures[trip]
 	});
 
 	map.addLayer({
@@ -5032,39 +5157,7 @@ map.once('styledata', () => {
 
 	map.addLayer(new RunnerLayer({id: 'runners'}), buildingLayerId);
 
-	for (const section of sections[trip]) {
-		const {name, index, distance} = section,
-			point1 = turf.along(routeFeature, distance),
-			point2 = turf.along(routeFeature, distance + 0.001),
-			bearing = turf.bearing(point2, point1) - 10,
-			coord = turf.getCoord(point1);
-			section.popup = new AnimatedPopup({closeButton: false, closeOnClick: false, anchor: 'bottom'})
-				.setLngLat(coord)
-				.setHTML(name)
-				.addTo(map),
-			element = section.popup.getElement();
-
-		element.addEventListener('click', event => {
-			trackingTeam = undefined;
-			stopTrackingAnimation();
-			hidePanel();
-			setInteractions(false);
-			map.flyTo({
-				center: turf.getCoord(coord),
-				zoom: 21,
-				bearing,
-				pitch: 80,
-				easing: t => t,
-				speed: 0.5
-			}, {
-				auto: true
-			});
-			map.once('moveend', () => {
-				setInteractions(true);
-				canvasElement.focus();
-			});
-		});
-	}
+	updateStations();
 
 	for (let i = teams.length - 1; i > 0; i--) {
 		const team = teams[i],
@@ -5090,7 +5183,7 @@ map.once('styledata', () => {
 		element.addEventListener('click', event => {
 			trackingTeam = i;
 			if (autoTrackingMode) {
-				lastViewSwitch = Date.now();
+				lastViewSwitch = Date.now() - clockOffset;
 			}
 			startTrackingAnimation();
 			showPanel();
@@ -5161,101 +5254,103 @@ map.once('styledata', () => {
 		}
 	})
 
-	let lastDataLoad = 0;
+	let lastClockRefresh = 0;
 	let initialDataLoadComplete = false;
 
 	const frame = () => {
-		const now = Date.now(),
+		const now = Date.now() - clockOffset,
 			transform = map.transform;
 
 		if (now >= lastDataLoad + 10000) {
 			const reset = now >= lastDataLoad + 20000;
 
-			fetch('https://mini-tokyo.appspot.com/hakone')
-				.then(response => response.json())
-				.then(result => {
-					for (const point of result.points) {
-						const now = Date.now();
-						const id = point[0];
-						const lat = point[1];
-						const lng = point[2];
-						let distance = point[5];
-						let speed = point[6];
-						const position = point[7];
-						const section = point[8];
-						let ts = point[9];
-						const prevDistance = teams[id].distance;
-						const prevSpeed = teams[id].speed;
-						const prevTs = teams[id].ts;
+			loadRunnerData(now, result => {
+				for (const point of result.points) {
+					const now = Date.now() - clockOffset;
+					const id = point[0];
+					const lat = point[1];
+					const lng = point[2];
+					let distance = point[5];
+					let speed = point[6];
+					const position = point[7];
+					const section = point[8];
+					let ts = point[9];
+					const prevDistance = teams[id].distance;
+					const prevSpeed = teams[id].speed;
+					const prevTs = teams[id].ts;
 
-						const history = teams[id].speedHistory[trip];
-						if (result.status.sg === 0 && position !== null && (history.d.length === 0 || distance > history.d[history.d.length - 1])) {
-							history.d.push(distance);
-							history.s.push(speed);
-						}
-
-						if (!isNaN(prevDistance) && !isNaN(prevSpeed) && !isNaN(prevTs) && !reset) {
-							const adjustedDistance = prevDistance + prevSpeed * (now - prevTs * 1000) / 3600000;
-							const adjustedSpeed = (distance + speed * (now + 10000 - ts * 1000) / 3600000 - adjustedDistance) * 360;
-
-							distance = adjustedDistance;
-							speed = adjustedSpeed;
-							ts = now / 1000;
-						}
-
-						if (result.status.sg === 1 || position === null) {
-							distance = speed = 0;
-						}
-
-						if (now >= trips[trip].startTime + 60000 || trip === 1) {
-							Object.assign(teams[id], {
-								lat,
-								lng,
-								distance,
-								speed,
-								section,
-								ts
-							});
-						}
+					const history = teams[id].speedHistory[trip];
+					if (result.status.sg === 0 && position !== null && (history.d.length === 0 || distance > history.d[history.d.length - 1])) {
+						history.d.push(distance);
+						history.s.push(speed);
 					}
-					if (!initialDataLoadComplete) {
-						if (teams[placing[0]].distance === 0) {
-							trackingTeam = placing[0];
-							showPanel();
-						} else {
-							setTimeout(() => {
-								setInteractions(false);
-								map.flyTo({
-									center: turf.getCoord(turf.along(routeFeature, teams[placing[0]].estimatedDistance + 0.1)),
-									zoom: 17,
-									bearing: (teams[placing[0]].bearing + 360) % 360 - 180,
-									pitch: 60,
-									easing: t => t,
-									speed: 0.5
-								}, {
-									auto: true
-								});
-								map.once('moveend', () => {
-									trackingTeam = placing[0];
-									trackingMode = 'front';
-									lastViewSwitch = Date.now();
-									startTrackingAnimation();
-									showPanel();
-									setInteractions(true);
-								});
-							}, 3000);
-						}
-						initialDataLoadComplete = true;
+
+					if (!isNaN(prevDistance) && !isNaN(prevSpeed) && !isNaN(prevTs) && !reset) {
+						const adjustedDistance = prevDistance + prevSpeed * (now - prevTs * 1000) / 3600000;
+						const adjustedSpeed = (distance + speed * (now + 10000 - ts * 1000) / 3600000 - adjustedDistance) * 360;
+
+						distance = adjustedDistance;
+						speed = adjustedSpeed;
+						ts = now / 1000;
 					}
-					updateChart();
-					updatePlacing();
-					if (autoPaging && trackingTeam !== undefined && trackingTeam !== placing[0]) {
+
+					if (result.status.sg === 1 || position === null) {
+						distance = speed = 0;
+					}
+
+					if (trip === 0 && now < trips[trip].startTime + 340000) {
+						teams[id].distance = teams[id]._speed * (now - trips[trip].startTime) / 3600000;
+						teams[id].speed = teams[id]._speed;
+						teams[id].ts = now / 1000;
+					} else {
+						Object.assign(teams[id], {
+							lat,
+							lng,
+							distance,
+							speed,
+							section,
+							ts
+						});
+					}
+				}
+				if (!initialDataLoadComplete) {
+					if (teams[placing[0]].distance <= 0) {
 						trackingTeam = placing[0];
-						if (!autoTrackingMode) {
-							startTrackingAnimation();
-						}
+						showPanel();
+					} else {
+						setTimeout(() => {
+							setInteractions(false);
+							map.flyTo({
+								center: turf.getCoord(turf.along(routeFeatures[trip], teams[placing[0]].estimatedDistance + 0.1)),
+								zoom: 17,
+								bearing: (teams[placing[0]].bearing + 360) % 360 - 180,
+								pitch: 60,
+								easing: t => t,
+								speed: 0.5
+							}, {
+								auto: true
+							});
+							map.once('moveend', () => {
+								trackingTeam = placing[0];
+								trackingMode = 'front';
+								lastViewSwitch = Date.now() - clockOffset;
+								startTrackingAnimation();
+								showPanel();
+								setInteractions(true);
+							});
+						}, 3000);
 					}
-				});
+					initialDataLoadComplete = true;
+				}
+				updateChart();
+				updatePlacing();
+				if (autoPaging && trackingTeam !== undefined && trackingTeam !== placing[0]) {
+					trackingTeam = placing[0];
+					if (!autoTrackingMode) {
+						startTrackingAnimation();
+					}
+				}
+			});
 
 			if (reset) {
 				fetch(`https://mini-tokyo.appspot.com/hakone?q=speed-${trip}`)
@@ -5277,8 +5372,8 @@ map.once('styledata', () => {
 			const team = teams[i];
 			if (!isNaN(team.distance) && !isNaN(team.speed) && !isNaN(team.ts)) {
 				const distance = team.estimatedDistance = clamp(team.distance + team.speed * (now - team.ts * 1000) / 3600000, 0, sections[trip][5].distance + 0.02),
-					point = turf.along(routeFeature, distance),
-					point2 = turf.along(routeFeature, distance + 0.001),
+					point = turf.along(routeFeatures[trip], distance),
+					point2 = turf.along(routeFeatures[trip], distance + 0.001),
 					bearing = team.bearing = turf.bearing(point, point2),
 					point3 = turf.destination(point, team.offset / 1000, bearing + 90),
 					coord = team.coord = turf.getCoord(point3),
@@ -5297,18 +5392,15 @@ map.once('styledata', () => {
 					team.object.position.z = mCoord.z - modelOrigin.z;
 					team.object.rotation.z = THREE.MathUtils.degToRad(-bearing);
 
-					if (distance === sections[trip][5].distance + 0.02) {
-						team.object.removeFromParent();
-						delete team.object;
-					}
+					team.object.visible = distance < sections[trip][5].distance + 0.02;
 				}
 				if (team.object2) {
 					const baseDistance = sections[trip][section].distance,
 						nextDistance = sections[trip][section + 1].distance;
 
 					if (section < 4 && nextDistance - distance <= 0.1) {
-						const point4 = turf.along(routeFeature, nextDistance),
-							point5 = turf.along(routeFeature, nextDistance - 0.001),
+						const point4 = turf.along(routeFeatures[trip], nextDistance),
+							point5 = turf.along(routeFeatures[trip], nextDistance - 0.001),
 							bearing2 = turf.bearing(point4, point5),
 							point6 = turf.destination(point4, team.offset / 1000, bearing2 - 90),
 							coord2 = turf.getCoord(point6),
@@ -5324,8 +5416,8 @@ map.once('styledata', () => {
 						team.object2.userData.duration = 40 / 24;
 						team.object2.visible = true;
 					} else if (section > 0 && distance - baseDistance <= 0.02) {
-						const point4 = turf.along(routeFeature, baseDistance),
-							point5 = turf.along(routeFeature, baseDistance + 0.001),
+						const point4 = turf.along(routeFeatures[trip], baseDistance),
+							point5 = turf.along(routeFeatures[trip], baseDistance + 0.001),
 							bearing2 = turf.bearing(point4, point5),
 							point6 = turf.destination(point4, team.offset / 1000, bearing2 + 90),
 							point7 = turf.destination(point6, distance - baseDistance, bearing2 - 45),
@@ -5394,6 +5486,12 @@ map.once('styledata', () => {
 			}
 
 			lastViewSwitch = now;
+		}
+
+		if (Math.floor(now / 1000) !== Math.floor(lastClockRefresh / 1000)) {
+			clockElement.innerText = new Date(now).toLocaleTimeString('ja-JP', {timeZone: 'JST'});
+			sliderElement.value = now - trips[trip].startTime;
+			lastClockRefresh = now;
 		}
 
 		requestAnimationFrame(frame);
