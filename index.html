@@ -9,9 +9,9 @@
 		gtag('config', 'UA-39988758-2');
 	</script>
 	<meta charset="utf-8" />
-	<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" />
+	<link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v2.11.1/mapbox-gl.css" />
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.css" />
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@7.4.1/swiper-bundle.min.css" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8.4.5/swiper-bundle.min.css" />
 	<link rel="stylesheet" href="hakone-ekiden.css" />
 	<title>箱根駅伝 3D</title>
 	<meta name="description" content="A real-time 3D digital map of Hakone Ekiden. This data visualization was produced by Akihiko Kusanagi." />
@@ -25,16 +25,16 @@
 	<meta property="og:image" content="https://nagix.github.io/hakone-ekiden/screenshot1.jpg" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@nagix" />
-	<script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/mapbox-gl-animated-popup@v0.2.1/dist/mapbox-gl-animated-popup.min.js"></script>
+	<script src="https://api.mapbox.com/mapbox-gl-js/v2.11.1/mapbox-gl.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/mapbox-gl-animated-popup@v0.4.0/dist/mapbox-gl-animated-popup.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@turf/turf@5/turf.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/three@0.136.0/examples/js/loaders/GLTFLoader.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/three@0.136.0/examples/js/utils/SkeletonUtils.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/swiper@7.4.1/swiper-bundle.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.2.2/dist/chartjs-plugin-annotation.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/pako@2.0.4/dist/pako_inflate.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/utils/SkeletonUtils.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/swiper@8.4.5/swiper-bundle.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako_inflate.min.js"></script>
 </head>
 <body>
 	<div id="map">
@@ -141,6 +141,7 @@
 						Shift + 上下矢印キー: 傾き<br>
 						チームアイコンクリック/タップ: 追跡<br>
 						地図クリック/タップ: 追跡解除
+					</p>
 					<hr>
 					<p>このデータビジュアライゼーションは <a href="https://nagix.github.io" target="_blank">草薙 昭彦</a> により作成されました。</p>
 					<p>ソースコードは <a href="https://github.com/nagix/hakone-ekiden" target="_blank">GitHub リポジトリ</a> にて公開されています。</p>
